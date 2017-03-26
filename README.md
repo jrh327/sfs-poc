@@ -36,6 +36,9 @@ Proof of concept for a fully-encrypted filesystem in which files and directories
 
 - A directory entry shall be 32 bytes in size
   - 0x00: Reserved
+    - This byte shall contain 0x00 for main directory entries
+    - For extra filename entries, it shall contain the number of the entry in the group of extra filename entries
+    - For soft-deleted files' directory entries, it shall be masked with 0xC0
   - 0x01: Attributes
   - 0x02: Created date (two bytes)
     - Month: four bits
@@ -50,11 +53,12 @@ Proof of concept for a fully-encrypted filesystem in which files and directories
   - 0x09: Modified time (three bytes)
   - 0x0C: Number of allocation table of first cluster (two bytes)
   - 0x0E: Allocation table entry of first cluster (two bytes)
-  - 0x10: File length (four bits)
+  - 0x10: File length (four bytes)
   - 0x14: Number of following entries used for filename
   - 0x15: Filename (variable length, UTF-8 encoded)
-- For a file whose name is longer than 11 bytes, the rest of the name shall be stored in the following entries
-  - The first byte shall be the number of the entry in the group of extra filename entries, i.e. the first extra entry will have 1 in the first byte, the second extra entry will have 2 in the first byte, etc.
+    - For a file whose name is longer than 11 bytes, the rest of the name shall be stored in the following entries
+      - The first byte shall be the number of the entry in the group of extra filename entries, i.e. the first extra entry will have 1 in the first byte, the second extra entry will have 2 in the first byte, etc.
+    - Additional bytes when filename does not extend to the end of the directory entry will contain 0x00
 
 ### File Allocation ###
 
