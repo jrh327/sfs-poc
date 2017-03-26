@@ -50,7 +50,7 @@ struct directory_entry {
     uint16_t first_cluster;
     uint32_t file_length;
     uint8_t filename_entries;
-    uint8_t filename[10];
+    uint8_t filename[11];
 };
 
 struct directory_entry* read_directory_entry(FILE* fp) {
@@ -62,33 +62,35 @@ struct directory_entry* read_directory_entry(FILE* fp) {
     dir_entry->attributes = entry[1];
 
     dir_entry->created_month = (entry[2] & 0xf0) >> 4;
-    dir_entry->created_day = ((entry[2] & 0x0f) << 1) | ((entry[3] & 0x80) >> 7);
+    dir_entry->created_day = ((entry[2] & 0x0f) << 1)
+            | ((entry[3] & 0x80) >> 7);
     dir_entry->created_year = entry[3] & 0x7f;
     dir_entry->created_hour = (entry[4] & 0xf8) >> 3;
-    dir_entry->created_minute = ((entry[4] & 0x7) << 3) | ((entry[5] & 0xe0) >> 5);
-    dir_entry->created_second = ((entry[5] & 0x1f) << 1) | ((entry[6] & 0x80) >> 7);
+    dir_entry->created_minute = ((entry[4] & 0x7) << 3)
+            | ((entry[5] & 0xe0) >> 5);
+    dir_entry->created_second = ((entry[5] & 0x1f) << 1)
+            | ((entry[6] & 0x80) >> 7);
     dir_entry->created_millisecond = entry[6] & 0x7f;
 
     dir_entry->modified_month = (entry[7] & 0xf0) >> 4;
-    dir_entry->modified_day = ((entry[7] & 0x0f) << 1) | ((entry[8] & 0x80) >> 7);
+    dir_entry->modified_day = ((entry[7] & 0x0f) << 1)
+            | ((entry[8] & 0x80) >> 7);
     dir_entry->modified_year = entry[8] & 0x7f;
     dir_entry->modified_hour = (entry[9] & 0xf8) >> 3;
-    dir_entry->modified_minute = ((entry[9] & 0x7) << 3) | ((entry[10] & 0xe0) >> 5);
-    dir_entry->modified_second = ((entry[10] & 0x1f) << 1) | ((entry[11] & 0x80) >> 7);
+    dir_entry->modified_minute = ((entry[9] & 0x7) << 3)
+            | ((entry[10] & 0xe0) >> 5);
+    dir_entry->modified_second = ((entry[10] & 0x1f) << 1)
+            | ((entry[11] & 0x80) >> 7);
     dir_entry->modified_millisecond = entry[11] & 0x7f;
 
-    uint16_t tmp_table_number = (entry[12] << 8) | entry[13];
-    dir_entry->table_number = convert_uint16(tmp_table_number);
-
-    uint16_t tmp_first_cluster = (entry[14] << 8) | entry[15];
-    dir_entry->first_cluster = convert_uint16(tmp_first_cluster);
-
-    uint32_t tmp_file_length = (entry[16] << 24) | (entry[17] << 16) | (entry[18] << 8) | entry[19];
-    dir_entry->file_length = convert_uint32(tmp_file_length);
+    dir_entry->table_number = (entry[12] << 8) | entry[13];
+    dir_entry->first_cluster = (entry[14] << 8) | entry[15];
+    dir_entry->file_length = (entry[16] << 24) | (entry[17] << 16)
+            | (entry[18] << 8) | entry[19];
 
     dir_entry->filename_entries = entry[20];
 
-    for (size_t i = 0; i < 12; i++) {
+    for (size_t i = 0; i < 11; i++) {
         dir_entry->filename[i] = entry[21 + i];
     }
 

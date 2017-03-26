@@ -49,6 +49,21 @@ uint16_t read_uint16(FILE* fp) {
 }
 
 /**
+ * Read a 32-bit value from the given file.
+ * 
+ * The value is expected to be in big-endian format. This function will
+ * convert to little-endian if needed by the current system.
+ * 
+ * @param fp the file to read from
+ * @return the value that is read from the file
+ */
+uint32_t read_uint32(FILE* fp) {
+    uint32_t value;
+    fread(&value, sizeof(value), 1, fp);
+    return convert_uint32(value);
+}
+
+/**
  * Write a 16-bit value to the given file.
  * 
  * The value will be written to the file in big-endian format. This function
@@ -58,7 +73,21 @@ uint16_t read_uint16(FILE* fp) {
  * @param value the value to write
  */
 void write_uint16(FILE* fp, uint16_t value) {
-	value = convert_uint16(value);
+    value = convert_uint16(value);
+    fwrite(&value, sizeof(value), 1, fp);
+}
+
+/**
+ * Write a 32-bit value to the given file.
+ * 
+ * The value will be written to the file in big-endian format. This function
+ * will convert from little-endian if needed because of the current system.
+ * 
+ * @param fp the file to write to
+ * @param value the value to write
+ */
+void write_uint32(FILE* fp, uint32_t value) {
+    value = convert_uint32(value);
     fwrite(&value, sizeof(value), 1, fp);
 }
 
