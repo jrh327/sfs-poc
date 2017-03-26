@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "util.h"
+#include "sfs.h"
 
 const char* filename = "test.bin";
 
@@ -11,7 +11,7 @@ void delete_file() {
     }
 }
 
-int test_writing_file() {
+int test_writing_uint16() {
     FILE* fp = fopen(filename, "wb");
     if (fp == NULL) {
         printf("error creating file\n");
@@ -47,7 +47,7 @@ int test_writing_file() {
     return ret;
 }
 
-int test_reading_file() {
+int test_reading_uint16() {
     FILE* fp = fopen(filename, "wb");
     if (fp == NULL) {
         printf("error creating file\n");
@@ -81,10 +81,15 @@ int test_reading_file() {
 }
 
 int main() {
-    if (test_writing_file() != 0) {
-        printf("test_writing_file() failed\n");
+    if (test_writing_uint16() != 0) {
+        printf("test_writing_uint16() failed\n");
+    } else {
+        printf("test_writing_uint16() passed\n");
     }
-    if (test_reading_file() != 0) {
-        printf("test_reading_file() failed\n");
+
+    if (test_reading_uint16() != 0) {
+        printf("test_reading_uint16() failed\n");
+    } else {
+        printf("test_reading_uint16() passed\n");
     }
 }

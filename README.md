@@ -53,7 +53,7 @@ Proof of concept for a fully-encrypted filesystem in which files and directories
   - 0x10: File length (four bits)
   - 0x14: Number of following entries used for filename
   - 0x15: Filename (variable length, UTF-8 encoded)
-- For a file whose name is longer than 10 bytes, the rest of the name shall be stored in the following entries
+- For a file whose name is longer than 11 bytes, the rest of the name shall be stored in the following entries
   - The first byte shall be the number of the entry in the group of extra filename entries, i.e. the first extra entry will have 1 in the first byte, the second extra entry will have 2 in the first byte, etc.
 
 ### File Allocation ###
