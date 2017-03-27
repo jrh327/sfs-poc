@@ -29,7 +29,20 @@ struct boot_sector* initialize_new_filesystem() {
 
     sfs->fp = fp;
 
-    uint8_t choice;
+    char choice;
+    printf("Is this a partition? [y/n]: ");
+    scanf("%s", &choice);
+    if (choice == 'y' || choice == 'Y') {
+        uint64_t offset;
+        printf("Please enter the parition's offset: ");
+        scanf("%llu", &offset);
+        sfs->partition_offset = offset;
+    } else {
+        sfs->partition_offset = 0;
+    }
+
+
+
     printf("Please enter the size of the filesystem's allocation tables:\n");
     printf("1) Small  (2K entries per table)\n");
     printf("2) Medium (4k entries per table)\n");
@@ -93,12 +106,18 @@ struct boot_sector* initialize_new_filesystem() {
     write_uint8(fp, 'S');
     write_uint8(fp, 'F');
     write_uint8(fp, 'S');
+    write_uint8(fp, ' ');
+    write_uint8(fp, 'v');
+    write_uint8(fp, '1');
+    write_uint8(fp, '.');
+    write_uint8(fp, '0');
+    write_uint64(fp, sfs->partition_offset);
     write_uint16(fp, sfs->entries_per_fat);
     write_uint16(fp, sfs->bytes_per_sector);
     write_uint8(fp, sfs->sectors_per_cluster);
 
-    /* already wrote 8 bytes to the boot sector, zero out the rest */
-    for (size_t i = 8; i < BOOT_SECTOR_SIZE; i++) {
+    /* already wrote 21 bytes to the boot sector, zero out the rest */
+    for (size_t i = 21; i < BOOT_SECTOR_SIZE; i++) {
         write_uint8(fp, 0);
     }
 
@@ -132,6 +151,7 @@ struct boot_sector* load_filesystem() {
         return NULL;
     }
 
+    /* read the first three bytes to check if this is an SFS filesystem */
     if (read_uint8(fp) != 'S'
           || read_uint8(fp) != 'F'
           || read_uint8(fp) != 'S') {
@@ -139,9 +159,13 @@ struct boot_sector* load_filesystem() {
         return NULL;
     }
 
+    /* skip to the actual data */
+    fseek(fp, 8, SEEK_SET);
+
     struct boot_sector* sfs = malloc(sizeof(struct boot_sector));
 
     sfs->fp = fp;
+    sfs->partition_offset = read_uint64(fp);
     sfs->entries_per_fat = read_uint16(fp);
     sfs->bytes_per_sector = read_uint16(fp);
     sfs->sectors_per_cluster = read_uint8(fp);

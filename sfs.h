@@ -11,6 +11,7 @@
  */
 struct boot_sector {
     FILE* fp;
+    uint64_t partition_offset;
     uint16_t entries_per_fat;
     uint16_t bytes_per_sector;
     uint8_t sectors_per_cluster;
