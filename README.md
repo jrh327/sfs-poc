@@ -74,8 +74,7 @@ Proof of concept for a fully-encrypted filesystem in which files and directories
   - Large: 8K entries
 - All allocation tables in a filesystem shall be of the same size
 - Allocation table entries shall be 16-bits in size
-- The first entry in the table shall store the number of the allocation table, zero-based
-- The rest of the entries shall point to the next cluster of a file in the allocation table's data block
+- The entries shall point to the next cluster of a file in the allocation table's data block
 - When the next cluster is located in a different data block, the first entry shall be the cluster number | 0xC000 and the next entry shall contain the number of the correct allocation table
 
 ### Encryption ###

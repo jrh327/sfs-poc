@@ -30,6 +30,12 @@ uint32_t convert_uint32(uint32_t value) {
     }
 }
 
+uint8_t read_uint8(FILE* fp) {
+    uint8_t value;
+    fread(&value, sizeof(value), 1, fp);
+    return value;
+}
+
 uint16_t read_uint16(FILE* fp) {
     uint16_t value;
     fread(&value, sizeof(value), 1, fp);
@@ -40,6 +46,10 @@ uint32_t read_uint32(FILE* fp) {
     uint32_t value;
     fread(&value, sizeof(value), 1, fp);
     return convert_uint32(value);
+}
+
+void write_uint8(FILE* fp, uint8_t value) {
+    fwrite(&value, sizeof(value), 1, fp);
 }
 
 void write_uint16(FILE* fp, uint16_t value) {

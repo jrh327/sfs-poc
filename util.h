@@ -3,9 +3,29 @@
 
 #include "includes.h"
 
+/**
+ * Put the bytes of a 16-bit value in big-endian order.
+ * 
+ * @param value the value to put in big-endian order
+ * @return the result of the conversion
+ */
 uint16_t convert_uint16(uint16_t value);
 
+/**
+ * Put the bytes of a 32-bit value in big-endian order.
+ * 
+ * @param value the value to put in big-endian order
+ * @return the result of the conversion
+ */
 uint32_t convert_uint32(uint32_t value);
+
+/**
+ * Read a 8-bit value from the given file.
+ * 
+ * @param fp the file to read from
+ * @return the value that is read from the file
+ */
+uint8_t read_uint8(FILE* fp);
 
 /**
  * Read a 16-bit value from the given file.
@@ -28,6 +48,14 @@ uint16_t read_uint16(FILE* fp);
  * @return the value that is read from the file
  */
 uint32_t read_uint32(FILE* fp);
+
+/**
+ * Write a 8-bit value to the given file.
+ * 
+ * @param fp the file to write to
+ * @param value the value to write
+ */
+void write_uint8(FILE* fp, uint8_t value);
 
 /**
  * Write a 16-bit value to the given file.
