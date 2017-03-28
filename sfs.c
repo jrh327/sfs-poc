@@ -66,7 +66,8 @@ struct boot_sector* initialize_filesystem_partition(FILE* fp,
     /* initialize the file allocation table */
     uint16_t fat_entries = sfs->entries_per_fat;
     for (size_t i = 0; i < fat_entries; i++) {
-        write_uint16(fp, 0);
+        /* write 4 bytes per entry: 2 for fat number, 2 for next cluster */
+        write_uint32(fp, 0);
     }
 
     /* initialize a cluster for the root directory */
@@ -133,14 +134,17 @@ void move_to_fat(struct boot_sector* sfs, uint16_t fat_number) {
     }
 }
 
-uint16_t get_fat_entry(struct boot_sector* sfs, uint16_t fat_number,
+uint32_t get_fat_entry(struct boot_sector* sfs, uint16_t fat_number,
         uint16_t entry_number) {
     move_to_fat(sfs, fat_number);
 
     FILE* fp = sfs->fp;
-    fseek(fp, entry_number * 2, SEEK_CUR);
+    fseek(fp, entry_number * 4, SEEK_CUR);
 
-    uint16_t entry = read_uint16(fp);
+    uint16_t entry_fat_number = read_uint16(fp);
+    uint16_t entry_cluster_number = read_uint16(fp);
+
+    uint32_t entry = (entry_fat_number << 16) | entry_cluster_number;
     return entry;
 }
 

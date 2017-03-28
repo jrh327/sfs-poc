@@ -67,7 +67,7 @@ void close_filesystem(FILE* fp);
  * @param entry_number the offset of the entry within the table
  * @return the value in the entry
  */
-uint16_t get_fat_entry(struct boot_sector* sfs, uint16_t fat_number,
+uint32_t get_fat_entry(struct boot_sector* sfs, uint16_t fat_number,
         uint16_t entry_number);
 
 /**
