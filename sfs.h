@@ -18,9 +18,33 @@ struct boot_sector {
 };
 
 /**
- * Create a new SFS filesystem.
+ * Create a new SFS filesystem with no partition offset.
+ * 
+ * Note: this is the same as calling initialize_filesystem_partition()
+ * with partition_offset set to 0.
+ * 
+ * @param fp the file that will contain the SFS filesystem
+ * @param fat_size the number of entries in the file allocation table
+ * @param bytes_per_sector the number of bytes in a data sector
+ * @param sectors_per_cluster the number of sectors in a data cluster
+ * @return the newly created boot sector
  */
-struct boot_sector* initialize_new_filesystem();
+struct boot_sector* initialize_new_filesystem(FILE* fp, uint16_t fat_size,
+        uint16_t bytes_per_sector, uint8_t sectors_per_cluster);
+
+/**
+ * Create a new SFS filesystem partition at the given offset.
+ * 
+ * @param fp the file that will contain the SFS filesystem
+ * @param partition_offset how far into fp to start the filesystem
+ * @param fat_size the number of entries in the file allocation table
+ * @param bytes_per_sector the number of bytes in a data sector
+ * @param sectors_per_cluster the number of sectors in a data cluster
+ * @return the newly created boot sector
+ */
+struct boot_sector* initialize_filesystem_partition(FILE* fp,
+        uint64_t partition_offset, uint16_t fat_size,
+        uint16_t bytes_per_sector, uint8_t sectors_per_cluster);
 
 /**
  * Read the boot sector of a SFS filesystem.

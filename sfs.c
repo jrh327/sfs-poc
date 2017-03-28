@@ -7,70 +7,21 @@
 
 #define BOOT_SECTOR_SIZE 512
 
-struct boot_sector* initialize_new_filesystem() {
+
+struct boot_sector* initialize_new_filesystem(FILE* fp, uint16_t fat_size,
+        uint16_t bytes_per_sector, uint8_t sectors_per_cluster) {
+    return initialize_filesystem_partition(fp, 0, fat_size,
+            bytes_per_sector, sectors_per_cluster);
+}
+
+struct boot_sector* initialize_filesystem_partition(FILE* fp,
+        uint64_t partition_offset, uint16_t fat_size,
+        uint16_t bytes_per_sector, uint8_t sectors_per_cluster) {
     struct boot_sector* sfs = malloc(sizeof(struct boot_sector));
-    char* filename = NULL;
-    size_t len = 0;
-
-    printf("Please enter the name of the filesystem: ");
-    while ((len = getline(&filename, &len, stdin)) <= 0) {
-        printf("Please enter the name of the filesystem: ");
-    }
-
-    /*
-     * open the file for read/write in binary mode
-     * creating a new filesystem so truncate the file if it exists already
-     */
-    FILE* fp = fopen(filename, "wb+");
-    if (fp == NULL) {
-        printf("error creating or opening the file\n");
-        return NULL;
-    }
 
     sfs->fp = fp;
-
-    char choice;
-    printf("Is this a partition? [y/n]: ");
-    scanf("%s", &choice);
-    if (choice == 'y' || choice == 'Y') {
-        uint64_t offset;
-        printf("Please enter the parition's offset: ");
-        scanf("%llu", &offset);
-        sfs->partition_offset = offset;
-    } else {
-        sfs->partition_offset = 0;
-    }
-
-
-
-    printf("Please enter the size of the filesystem's allocation tables:\n");
-    printf("1) Small  (2K entries per table)\n");
-    printf("2) Medium (4k entries per table)\n");
-    printf("3) Large  (8K entries per table)\n");
-    printf("Choice (default Medium): ");
-    scanf("%s", &choice);
-    switch (choice) {
-    case 1:
-        sfs->entries_per_fat = FAT_SIZE_SMALL;
-        break;
-    case 2:
-        sfs->entries_per_fat = FAT_SIZE_MEDIUM;
-        break;
-    case 3:
-        sfs->entries_per_fat = FAT_SIZE_LARGE;
-        break;
-    default:
-        sfs->entries_per_fat = FAT_SIZE_MEDIUM;
-        break;
-    }
-    printf("Set number of entries to file allocation table to %d.\n\n",
-            sfs->entries_per_fat);
-
-    uint16_t bytes_per_sector;
-    printf("Please enter the number of bytes per sector.\n");
-    printf("Must be a power of 2. Minimum 512, maximum 32768.\n");
-    printf("(default 512): ");
-    scanf("%hd", &bytes_per_sector);
+    sfs->partition_offset = partition_offset;
+    sfs->entries_per_fat = fat_size;
 
     if (bytes_per_sector < 512) {
         bytes_per_sector = 512;
@@ -81,14 +32,7 @@ struct boot_sector* initialize_new_filesystem() {
         }
         bytes_per_sector = bitpos;
     }
-
     sfs->bytes_per_sector = bytes_per_sector;
-    printf("Set number of bytes per sector to %d.\n\n", sfs->bytes_per_sector);
-
-    uint8_t sectors_per_cluster;
-    printf("Please enter the number of sectors per cluster.\n");
-    printf("Must be a power of 2, and maximum cluster size is 32K: ");
-    scanf("%s", &sectors_per_cluster);
 
     if (sectors_per_cluster * bytes_per_sector > 0x8000) {
         sectors_per_cluster = 0x8000 / bytes_per_sector;
@@ -97,11 +41,9 @@ struct boot_sector* initialize_new_filesystem() {
         while (!(sectors_per_cluster & bitpos)) {
             bitpos = bitpos >> 1;
         }
+        bytes_per_sector = bitpos;
     }
-
     sfs->sectors_per_cluster = sectors_per_cluster;
-    printf("Set number of sectors per cluster to %d.\n\n",
-            sfs->sectors_per_cluster);
 
     write_uint8(fp, 'S');
     write_uint8(fp, 'F');
@@ -136,21 +78,7 @@ struct boot_sector* initialize_new_filesystem() {
     return sfs;
 }
 
-struct boot_sector* load_filesystem() {
-    char* filename = NULL;
-    size_t len = 0;
-
-    printf("Please enter the name of the filesystem: ");
-    while ((len = getline(&filename, &len, stdin)) <= 0) {
-        printf("Please enter the name of the filesystem: ");
-    }
-
-    FILE* fp = fopen(filename, "rb+");
-    if (fp == NULL) {
-        printf("error creating or opening the file\n");
-        return NULL;
-    }
-
+struct boot_sector* load_filesystem(FILE* fp) {
     /* read the first three bytes to check if this is an SFS filesystem */
     if (read_uint8(fp) != 'S'
           || read_uint8(fp) != 'F'
