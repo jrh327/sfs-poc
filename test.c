@@ -265,6 +265,119 @@ int test_reading_directory_entry() {
     return ret;
 }
 
+int test_new_bootsector_constraints() {
+    FILE* fp = fopen(filename, "wb");
+    if (fp == NULL) {
+        printf("error creating file\n");
+        return -1;
+    }
+
+    uint16_t init_fat_size = FAT_SIZE_MEDIUM;
+    uint16_t init_bytes_per_sector = 512;
+    uint8_t init_sectors_per_cluster = 64;
+    uint16_t expected_fat_size = FAT_SIZE_MEDIUM;
+    uint16_t expected_bytes_per_sector = 512;
+    uint8_t expected_sectors_per_cluster = 64;
+    struct boot_sector* sfs = initialize_filesystem_partition(fp, 0,
+            init_fat_size, init_bytes_per_sector, init_sectors_per_cluster);
+    int ret = 0;
+    if (sfs->entries_per_fat != expected_fat_size) {
+       printf("entries_per_fat 1 - expected %d, got %d\n",
+                expected_fat_size, sfs->entries_per_fat);
+        ret = -1;
+    }
+
+    if (sfs->bytes_per_sector != expected_bytes_per_sector) {
+        printf("bytes_per_sector 1 - expected %d, got %d\n",
+                expected_bytes_per_sector, sfs->bytes_per_sector);
+        ret = -1;
+    }
+
+    if (sfs->sectors_per_cluster != expected_sectors_per_cluster) {
+        printf("sectors_per_cluster 1 - expected %d, got %d\n",
+                expected_sectors_per_cluster, sfs->sectors_per_cluster);
+        ret = -1;
+    }
+
+    fclose(fp);
+
+    delete_file();
+
+    fp = fopen(filename, "wb");
+    if (fp == NULL) {
+        printf("error creating file\n");
+        return -1;
+    }
+
+    init_fat_size = FAT_SIZE_MEDIUM - 1;
+    init_bytes_per_sector = 500;
+    init_sectors_per_cluster = 128;
+    expected_fat_size = FAT_SIZE_MEDIUM; /* default */
+    expected_bytes_per_sector = 512; /* minimum */
+    expected_sectors_per_cluster = 64; /* 32K byte max cluster size */
+    sfs = initialize_filesystem_partition(fp, 0,
+            init_fat_size, init_bytes_per_sector, init_sectors_per_cluster);
+    if (sfs->entries_per_fat != expected_fat_size) {
+       printf("entries_per_fat 2 - expected %d, got %d\n",
+                expected_fat_size, sfs->entries_per_fat);
+        ret = -1;
+    }
+
+    if (sfs->bytes_per_sector != expected_bytes_per_sector) {
+        printf("bytes_per_sector 2 - expected %d, got %d\n",
+                expected_bytes_per_sector, sfs->bytes_per_sector);
+        ret = -1;
+    }
+
+    if (sfs->sectors_per_cluster != expected_sectors_per_cluster) {
+        printf("sectors_per_cluster 2 - expected %d, got %d\n",
+                expected_sectors_per_cluster, sfs->sectors_per_cluster);
+        ret = -1;
+    }
+
+    fclose(fp);
+
+    delete_file();
+
+    fp = fopen(filename, "wb");
+    if (fp == NULL) {
+        printf("error creating file\n");
+        return -1;
+    }
+
+    init_fat_size = FAT_SIZE_MEDIUM;
+    init_bytes_per_sector = 544;
+    init_sectors_per_cluster = 20;
+    expected_fat_size = FAT_SIZE_MEDIUM; /* default */
+    expected_bytes_per_sector = 512; /* uses MSB if not power of 2 */
+    expected_sectors_per_cluster = 16; /* uses MSB if not power of 2 */
+    sfs = initialize_filesystem_partition(fp, 0,
+            init_fat_size, init_bytes_per_sector, init_sectors_per_cluster);
+    if (sfs->entries_per_fat != expected_fat_size) {
+       printf("entries_per_fat 3 - expected %d, got %d\n",
+                expected_fat_size, sfs->entries_per_fat);
+        ret = -1;
+    }
+
+    if (sfs->bytes_per_sector != expected_bytes_per_sector) {
+        printf("bytes_per_sector 3 - expected %d, got %d\n",
+                expected_bytes_per_sector, sfs->bytes_per_sector);
+        ret = -1;
+    }
+
+    if (sfs->sectors_per_cluster != expected_sectors_per_cluster) {
+        printf("sectors_per_cluster 3 - expected %d, got %d\n",
+                expected_sectors_per_cluster, sfs->sectors_per_cluster);
+        ret = -1;
+    }
+
+    fclose(fp);
+
+    delete_file();
+
+    return ret;
+}
+
 int main() {
     if (test_writing_uint16() != 0) {
         printf("test_writing_uint16() failed\n");
@@ -282,5 +395,11 @@ int main() {
         printf("test_reading_directory_entry() failed\n");
     } else {
         printf("test_reading_directory_entry() passed\n");
+    }
+
+    if (test_new_bootsector_constraints() != 0) {
+        printf("test_new_bootsector_constraints() failed\n");
+    } else {
+        printf("test_new_bootsector_constraints() passed\n");
     }
 }

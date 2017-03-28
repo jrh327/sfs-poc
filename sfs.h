@@ -5,6 +5,12 @@
 #include "files.h"
 #include "util.h"
 
+#define FAT_SIZE_SMALL 2048
+#define FAT_SIZE_MEDIUM 4096
+#define FAT_SIZE_LARGE 8192
+
+#define BOOT_SECTOR_SIZE 512
+
 /**
  * Structure containing information stored in the boot sector of the
  * filesystem.

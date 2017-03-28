@@ -1,13 +1,6 @@
 #include "sfs.h"
 #include "util.h"
 
-#define FAT_SIZE_SMALL 2048
-#define FAT_SIZE_MEDIUM 4096
-#define FAT_SIZE_LARGE 8192
-
-#define BOOT_SECTOR_SIZE 512
-
-
 struct boot_sector* initialize_new_filesystem(FILE* fp, uint16_t fat_size,
         uint16_t bytes_per_sector, uint8_t sectors_per_cluster) {
     return initialize_filesystem_partition(fp, 0, fat_size,
@@ -21,6 +14,12 @@ struct boot_sector* initialize_filesystem_partition(FILE* fp,
 
     sfs->fp = fp;
     sfs->partition_offset = partition_offset;
+
+    if (fat_size != FAT_SIZE_SMALL
+            && fat_size != FAT_SIZE_MEDIUM
+            && fat_size != FAT_SIZE_LARGE) {
+        fat_size = FAT_SIZE_MEDIUM;
+    }
     sfs->entries_per_fat = fat_size;
 
     if (bytes_per_sector < 512) {
@@ -41,7 +40,7 @@ struct boot_sector* initialize_filesystem_partition(FILE* fp,
         while (!(sectors_per_cluster & bitpos)) {
             bitpos = bitpos >> 1;
         }
-        bytes_per_sector = bitpos;
+        sectors_per_cluster = bitpos;
     }
     sfs->sectors_per_cluster = sectors_per_cluster;
 
