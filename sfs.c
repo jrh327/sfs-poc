@@ -133,18 +133,21 @@ void move_to_fat(struct boot_sector* sfs, uint16_t fat_number) {
     }
 }
 
-uint32_t get_fat_entry(struct boot_sector* sfs, uint16_t fat_number,
-        uint16_t entry_number) {
-    move_to_fat(sfs, fat_number);
+struct fat_entry get_fat_entry(struct boot_sector* sfs,
+        struct fat_entry entry) {
+    move_to_fat(sfs, entry.fat_number);
 
     FILE* fp = sfs->fp;
-    fseek(fp, entry_number * 4, SEEK_CUR);
+    fseek(fp, entry.cluster_number * 4, SEEK_CUR);
 
     uint16_t entry_fat_number = read_uint16(fp);
     uint16_t entry_cluster_number = read_uint16(fp);
 
-    uint32_t entry = (entry_fat_number << 16) | entry_cluster_number;
-    return entry;
+    struct fat_entry new_entry = {
+            .fat_number = entry_fat_number,
+            .cluster_number = entry_cluster_number
+    };
+    return new_entry;
 }
 
 void move_to_cluster(struct boot_sector* sfs, uint16_t data_block_number,

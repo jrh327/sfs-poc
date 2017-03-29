@@ -24,6 +24,14 @@ struct boot_sector {
 };
 
 /**
+ * Structure containing information stored in a allocation table entry.
+ */
+struct fat_entry {
+    uint16_t fat_number;
+    uint16_t cluster_number;
+};
+
+/**
  * Create a new SFS filesystem with no partition offset.
  * 
  * Note: this is the same as calling initialize_filesystem_partition()
@@ -69,12 +77,11 @@ void close_filesystem(FILE* fp);
  * Get an entry from a file allocation table.
  * 
  * @param sfs the information in the filesystem's boot sector
- * @param fat_number the number of the allocation table
- * @param entry_number the offset of the entry within the table
+ * @param fat_entry the location of the entry to retrieve
  * @return the value in the entry
  */
-uint32_t get_fat_entry(struct boot_sector* sfs, uint16_t fat_number,
-        uint16_t entry_number);
+struct fat_entry get_fat_entry(struct boot_sector* sfs,
+    struct fat_entry entry);
 
 /**
  * Get the data from a cluster.
