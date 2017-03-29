@@ -109,4 +109,94 @@ void write_uint32(FILE* fp, uint32_t value);
  */
 void write_uint64(FILE* fp, uint64_t value);
 
+/**
+ * Retrieve a 16-bit value from the given byte array.
+ * 
+ * This function assumes the value in the array is in big-endian format, and
+ * will convert to little-endian if needed because of the current system.
+ * 
+ * This function assumes pos + sizeof(value) does not extend past the end
+ * of the array.
+ * 
+ * @param arr the array to insert into
+ * @param value the value to insert
+ * @param pos the position to start inserting
+ */
+uint16_t get_uint16(uint8_t arr[], size_t pos);
+
+/**
+ * Retrieve a 32-bit value from the given byte array.
+ * 
+ * This function assumes the value in the array is in big-endian format, and
+ * will convert to little-endian if needed because of the current system.
+ * 
+ * This function assumes pos + sizeof(value) does not extend past the end
+ * of the array.
+ * 
+ * @param arr the array to insert into
+ * @param value the value to insert
+ * @param pos the position to start inserting
+ */
+uint32_t get_uint32(uint8_t arr[], size_t pos);
+
+/**
+ * Retrieve a 64-bit value from the given byte array.
+ * 
+ * This function assumes the value in the array is in big-endian format, and
+ * will convert to little-endian if needed because of the current system.
+ * 
+ * This function assumes pos + sizeof(value) does not extend past the end
+ * of the array.
+ * 
+ * @param arr the array to insert into
+ * @param value the value to insert
+ * @param pos the position to start inserting
+ */
+uint64_t get_uint64(uint8_t arr[], size_t pos);
+
+/**
+ * Insert a 16-bit value into the given byte array.
+ * 
+ * The value will be put into the array in big-endian format. This function
+ * will convert from little-endian if needed because of the current system.
+ * 
+ * This function assumes pos + sizeof(value) does not extend past the end
+ * of the array.
+ * 
+ * @param arr the array to insert into
+ * @param value the value to insert
+ * @param pos the position to start inserting
+ */
+void put_uint16(uint8_t arr[], uint16_t value, size_t pos);
+
+/**
+ * Insert a 32-bit value into the given byte array.
+ * 
+ * The value will be put into the array in big-endian format. This function
+ * will convert from little-endian if needed because of the current system.
+ * 
+ * This function assumes pos + sizeof(value) does not extend past the end
+ * of the array.
+ * 
+ * @param arr the array to insert into
+ * @param value the value to insert
+ * @param pos the position to start inserting
+ */
+void put_uint32(uint8_t arr[], uint32_t value, size_t pos);
+
+/**
+ * Insert a 64-bit value into the given byte array.
+ * 
+ * The value will be put into the array in big-endian format. This function
+ * will convert from little-endian if needed because of the current system.
+ * 
+ * This function assumes pos + sizeof(value) does not extend past the end
+ * of the array.
+ * 
+ * @param arr the array to insert into
+ * @param value the value to insert
+ * @param pos the position to start inserting
+ */
+void put_uint64(uint8_t arr[], uint64_t value, size_t pos);
+
 #endif /* UTIL_H */

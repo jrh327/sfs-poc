@@ -98,3 +98,53 @@ void write_uint64(FILE* fp, uint64_t value) {
     value = convert_uint64(value);
     fwrite(&value, sizeof(value), 1, fp);
 }
+
+uint16_t get_uint16(uint8_t arr[], size_t pos) {
+    uint16_t value = 0;
+    for (size_t i = 0; i < 2; i++) {
+        value = (value << 8) | arr[pos + i];
+    }
+    return convert_uint16(value);
+}
+
+uint32_t get_uint32(uint8_t arr[], size_t pos) {
+    uint32_t value = 0;
+    for (size_t i = 0; i < 4; i++) {
+        value = (value << 8) | arr[pos + i];
+    }
+    return convert_uint32(value);
+}
+
+uint64_t get_uint64(uint8_t arr[], size_t pos) {
+    uint64_t value = 0;
+    for (size_t i = 0; i < 8; i++) {
+        value = (value << 8) | arr[pos + i];
+    }
+    return convert_uint64(value);
+}
+
+void put_uint16(uint8_t arr[], uint16_t value, size_t pos) {
+    value = convert_uint16(value);
+    arr[pos] = (value >> 8) & 0xff;
+    arr[pos + 1] = (value & 0xff);
+}
+
+void put_uint32(uint8_t arr[], uint32_t value, size_t pos) {
+    value = convert_uint32(value);
+    arr[pos] = (value >> 24) & 0xff;
+    arr[pos + 1] = (value >> 16) & 0xff;
+    arr[pos + 2] = (value >> 8) & 0xff;
+    arr[pos + 3] = (value & 0xff);
+}
+
+void put_uint64(uint8_t arr[], uint64_t value, size_t pos) {
+    value = convert_uint64(value);
+    arr[pos] = (value >> 56) & 0xff;
+    arr[pos + 1] = (value >> 48) & 0xff;
+    arr[pos + 2] = (value >> 40) & 0xff;
+    arr[pos + 3] = (value >> 32) & 0xff;
+    arr[pos + 4] = (value >> 24) & 0xff;
+    arr[pos + 5] = (value >> 16) & 0xff;
+    arr[pos + 6] = (value >> 8) & 0xff;
+    arr[pos + 7] = (value & 0xff);
+}

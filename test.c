@@ -378,28 +378,20 @@ int test_new_bootsector_constraints() {
     return ret;
 }
 
+void run_test(char* test_name, int (*test)()) {
+    printf("--------------------\n");
+    int result = test();
+    if (result != 0) {
+        printf("%s() failed\n", test_name);
+    } else {
+        printf("%s() passed\n", test_name);
+    }
+    printf("--------------------\n\n");
+}
+
 int main() {
-    if (test_writing_uint16() != 0) {
-        printf("test_writing_uint16() failed\n");
-    } else {
-        printf("test_writing_uint16() passed\n");
-    }
-
-    if (test_reading_uint16() != 0) {
-        printf("test_reading_uint16() failed\n");
-    } else {
-        printf("test_reading_uint16() passed\n");
-    }
-
-    if (test_reading_directory_entry() != 0) {
-        printf("test_reading_directory_entry() failed\n");
-    } else {
-        printf("test_reading_directory_entry() passed\n");
-    }
-
-    if (test_new_bootsector_constraints() != 0) {
-        printf("test_new_bootsector_constraints() failed\n");
-    } else {
-        printf("test_new_bootsector_constraints() passed\n");
-    }
+    run_test("test_writing_uint16", test_writing_uint16);
+    run_test("test_reading_uint16", test_reading_uint16);
+    run_test("test_reading_directory_entry", test_reading_directory_entry);
+    run_test("test_new_bootsector_constraints", test_new_bootsector_constraints);
 }
