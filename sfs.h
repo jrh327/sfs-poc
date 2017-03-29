@@ -43,7 +43,7 @@ struct fat_entry {
  * @param sectors_per_cluster the number of sectors in a data cluster
  * @return the newly created boot sector
  */
-struct boot_sector* initialize_new_filesystem(FILE* fp, uint16_t fat_size,
+struct boot_sector initialize_new_filesystem(FILE* fp, uint16_t fat_size,
         uint16_t bytes_per_sector, uint8_t sectors_per_cluster);
 
 /**
@@ -56,7 +56,7 @@ struct boot_sector* initialize_new_filesystem(FILE* fp, uint16_t fat_size,
  * @param sectors_per_cluster the number of sectors in a data cluster
  * @return the newly created boot sector
  */
-struct boot_sector* initialize_filesystem_partition(FILE* fp,
+struct boot_sector initialize_filesystem_partition(FILE* fp,
         uint64_t partition_offset, uint16_t fat_size,
         uint16_t bytes_per_sector, uint8_t sectors_per_cluster);
 
@@ -66,7 +66,7 @@ struct boot_sector* initialize_filesystem_partition(FILE* fp,
  * @param fp the file containing the SFS filesystem
  * @return the boot sector
  */
-struct boot_sector* load_filesystem(FILE* fp);
+struct boot_sector load_filesystem(FILE* fp);
 
 /**
  * Close the filesystem.
@@ -77,21 +77,20 @@ void close_filesystem(FILE* fp);
  * Get an entry from a file allocation table.
  * 
  * @param sfs the information in the filesystem's boot sector
- * @param fat_entry the location of the entry to retrieve
+ * @param entry the location of the entry to retrieve
  * @return the value in the entry
  */
-struct fat_entry get_fat_entry(struct boot_sector* sfs,
-    struct fat_entry entry);
+struct fat_entry get_fat_entry(const struct boot_sector sfs,
+    const struct fat_entry entry);
 
 /**
  * Get the data from a cluster.
  * 
  * @param sfs the information in the filesystem's boot sector
- * @param data_block_number the number of the data block
- * @param cluster_number the offset of the cluster within the data block
+ * @param entry the location of the cluster to retrieve
  * @return the data in the cluster
  */
-uint8_t* get_cluster(struct boot_sector* sfs, uint16_t data_block_number,
-        uint16_t cluster_number);
+uint8_t* get_cluster(const struct boot_sector sfs,
+        const struct fat_entry entry);
 
 #endif /* SFS_H */

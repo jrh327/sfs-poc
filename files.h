@@ -60,7 +60,7 @@ struct directory_entry {
  * @param fp the file to read from
  * @return the directory entry
  */
-struct directory_entry* read_directory_entry(FILE* fp);
+struct directory_entry read_directory_entry(FILE* fp);
 
 /**
  * Write a directory entry to the given file.
@@ -68,6 +68,6 @@ struct directory_entry* read_directory_entry(FILE* fp);
  * @param fp the file to write to
  * @param dir_entry the directory entry to write
  */
-void write_directory_entry(FILE* fp, struct directory_entry* dir_entry);
+void write_directory_entry(FILE* fp, struct directory_entry dir_entry);
 
 #endif /* FILES_H */

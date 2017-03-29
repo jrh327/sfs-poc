@@ -111,30 +111,31 @@ int test_reading_directory_entry() {
     const uint8_t test_entries = 1;
     const uint8_t test_filename[11] = { 'f', 'i', 'l', 'e', 'n', 'a', 'm', 'e', 't', 'x', 't' };
 
-    struct directory_entry* dir_entry = malloc(sizeof(struct directory_entry));
+    struct directory_entry dir_entry = {
+        .reserved = test_reserved,
+        .attributes = test_attributes,
+        .created_month = test_created_month,
+        .created_day = test_created_day,
+        .created_year = test_created_year,
+        .created_hour = test_created_hour,
+        .created_minute = test_created_minute,
+        .created_second = test_created_second,
+        .created_millisecond = test_created_milli,
+        .modified_month = test_modified_month,
+        .modified_day = test_modified_day,
+        .modified_year = test_modified_year,
+        .modified_hour = test_modified_hour,
+        .modified_minute = test_modified_minute,
+        .modified_second = test_modified_second,
+        .modified_millisecond = test_modified_milli,
+        .table_number = test_table,
+        .first_cluster = test_cluster,
+        .file_length = test_file_length,
+        .filename_entries = test_entries
+    };
 
-    dir_entry->reserved = test_reserved;
-    dir_entry->attributes = test_attributes;
-    dir_entry->created_month = test_created_month;
-    dir_entry->created_day = test_created_day;
-    dir_entry->created_year = test_created_year;
-    dir_entry->created_hour = test_created_hour;
-    dir_entry->created_minute = test_created_minute;
-    dir_entry->created_second = test_created_second;
-    dir_entry->created_millisecond = test_created_milli;
-    dir_entry->modified_month = test_modified_month;
-    dir_entry->modified_day = test_modified_day;
-    dir_entry->modified_year = test_modified_year;
-    dir_entry->modified_hour = test_modified_hour;
-    dir_entry->modified_minute = test_modified_minute;
-    dir_entry->modified_second = test_modified_second;
-    dir_entry->modified_millisecond = test_modified_milli;
-    dir_entry->table_number = test_table;
-    dir_entry->first_cluster = test_cluster;
-    dir_entry->file_length = test_file_length;
-    dir_entry->filename_entries = test_entries;
     for (size_t i = 0; i < 11; i++) {
-        dir_entry->filename[i] = test_filename[i];
+        dir_entry.filename[i] = test_filename[i];
     }
 
     write_directory_entry(fp, dir_entry);
@@ -154,110 +155,130 @@ int test_reading_directory_entry() {
     delete_file();
 
     int ret = 0;
-    if (dir_entry->reserved != test_reserved) {
+    if (dir_entry.reserved != test_reserved) {
         printf("reserved - expected %d, got %d\n",
-                test_reserved, dir_entry->reserved);
+                test_reserved, dir_entry.reserved);
         ret = -1;
     }
 
-    if (dir_entry->attributes != test_attributes) {
-        printf("attributes - expected %d, got %d\n", test_attributes, dir_entry->attributes);
+    if (dir_entry.attributes != test_attributes) {
+        printf("attributes - expected %d, got %d\n",
+            test_attributes, dir_entry.attributes);
         ret = -1;
     }
 
-    if (dir_entry->created_month != test_created_month) {
-        printf("created_month - expected %d, got %d\n", test_created_month, dir_entry->created_month);
+    if (dir_entry.created_month != test_created_month) {
+        printf("created_month - expected %d, got %d\n",
+            test_created_month, dir_entry.created_month);
         ret = -1;
     }
 
-    if (dir_entry->created_day != test_created_day) {
-        printf("created_day - expected %d, got %d\n", test_created_day, dir_entry->created_day);
+    if (dir_entry.created_day != test_created_day) {
+        printf("created_day - expected %d, got %d\n",
+            test_created_day, dir_entry.created_day);
         ret = -1;
     }
 
-    if (dir_entry->created_year != test_created_year) {
-        printf("created_year - expected %d, got %d\n", test_created_year, dir_entry->created_year);
+    if (dir_entry.created_year != test_created_year) {
+        printf("created_year - expected %d, got %d\n",
+            test_created_year, dir_entry.created_year);
         ret = -1;
     }
 
-    if (dir_entry->created_hour != test_created_hour) {
-        printf("created_hour - expected %d, got %d\n", test_created_hour, dir_entry->created_hour);
+    if (dir_entry.created_hour != test_created_hour) {
+        printf("created_hour - expected %d, got %d\n",
+            test_created_hour, dir_entry.created_hour);
         ret = -1;
     }
 
-    if (dir_entry->created_minute != test_created_minute) {
-        printf("created_minute - expected %d, got %d\n", test_created_minute, dir_entry->created_minute);
+    if (dir_entry.created_minute != test_created_minute) {
+        printf("created_minute - expected %d, got %d\n",
+            test_created_minute, dir_entry.created_minute);
         ret = -1;
     }
 
-    if (dir_entry->created_second != test_created_second) {
-        printf("created_second - expected %d, got %d\n", test_created_second, dir_entry->created_second);
+    if (dir_entry.created_second != test_created_second) {
+        printf("created_second - expected %d, got %d\n",
+            test_created_second, dir_entry.created_second);
         ret = -1;
     }
 
-    if (dir_entry->created_millisecond != test_created_milli) {
-        printf("created_millisecond - expected %d, got %d\n", test_created_milli, dir_entry->created_millisecond);
+    if (dir_entry.created_millisecond != test_created_milli) {
+        printf("created_millisecond - expected %d, got %d\n",
+            test_created_milli, dir_entry.created_millisecond);
         ret = -1;
     }
 
-    if (dir_entry->modified_month != test_modified_month) {
-        printf("modified_month - expected %d, got %d\n", test_modified_month, dir_entry->modified_month);
+    if (dir_entry.modified_month != test_modified_month) {
+        printf("modified_month - expected %d, got %d\n",
+            test_modified_month, dir_entry.modified_month);
         ret = -1;
     }
 
-    if (dir_entry->modified_day != test_modified_day) {
-        printf("modified_day - expected %d, got %d\n", test_modified_day, dir_entry->modified_day);
+    if (dir_entry.modified_day != test_modified_day) {
+        printf("modified_day - expected %d, got %d\n",
+            test_modified_day, dir_entry.modified_day);
         ret = -1;
     }
 
-    if (dir_entry->modified_year != test_modified_year) {
-        printf("modified_year - expected %d, got %d\n", test_modified_year, dir_entry->modified_year);
+    if (dir_entry.modified_year != test_modified_year) {
+        printf("modified_year - expected %d, got %d\n",
+            test_modified_year, dir_entry.modified_year);
         ret = -1;
     }
 
-    if (dir_entry->modified_hour != test_modified_hour) {
-        printf("modified_hour - expected %d, got %d\n", test_modified_hour, dir_entry->modified_hour);
+    if (dir_entry.modified_hour != test_modified_hour) {
+        printf("modified_hour - expected %d, got %d\n",
+            test_modified_hour, dir_entry.modified_hour);
         ret = -1;
     }
 
-    if (dir_entry->modified_minute != test_modified_minute) {
-        printf("modified_minute - expected %d, got %d\n", test_modified_minute, dir_entry->modified_minute);
+    if (dir_entry.modified_minute != test_modified_minute) {
+        printf("modified_minute - expected %d, got %d\n",
+            test_modified_minute, dir_entry.modified_minute);
         ret = -1;
     }
 
-    if (dir_entry->modified_second != test_modified_second) {
-        printf("modified_second - expected %d, got %d\n", test_modified_second, dir_entry->modified_second);
+    if (dir_entry.modified_second != test_modified_second) {
+        printf("modified_second - expected %d, got %d\n",
+            test_modified_second, dir_entry.modified_second);
         ret = -1;
     }
 
-    if (dir_entry->modified_millisecond != test_modified_milli) {
-        printf("modified_millisecond - expected %d, got %d\n", test_modified_milli, dir_entry->modified_millisecond);
+    if (dir_entry.modified_millisecond != test_modified_milli) {
+        printf("modified_millisecond - expected %d, got %d\n",
+            test_modified_milli, dir_entry.modified_millisecond);
         ret = -1;
     }
 
-    if (dir_entry->table_number != test_table) {
-        printf("table_number - expected %d, got %d\n", test_table, dir_entry->table_number);
+    if (dir_entry.table_number != test_table) {
+        printf("table_number - expected %d, got %d\n",
+            test_table, dir_entry.table_number);
         ret = -1;
     }
 
-    if (dir_entry->first_cluster != test_cluster) {
-        printf("first_cluster - expected %d, got %d\n", test_cluster, dir_entry->first_cluster);
+    if (dir_entry.first_cluster != test_cluster) {
+        printf("first_cluster - expected %d, got %d\n",
+            test_cluster, dir_entry.first_cluster);
         ret = -1;
     }
 
-    if (dir_entry->file_length != test_file_length) {
-        printf("file_length - expected %d, got %d\n", test_file_length, dir_entry->file_length);
+    if (dir_entry.file_length != test_file_length) {
+        printf("file_length - expected %d, got %d\n",
+            test_file_length, dir_entry.file_length);
         ret = -1;
     }
 
-    if (dir_entry->filename_entries != test_entries) {
-        printf("filename_entries - expected %d, got %d\n", test_entries, dir_entry->filename_entries);
+    if (dir_entry.filename_entries != test_entries) {
+        printf("filename_entries - expected %d, got %d\n",
+            test_entries, dir_entry.filename_entries);
         ret = -1;
     }
 
     for (size_t i = 0; i < 11; i++) {
-        if (dir_entry->filename[i] != test_filename[i]) {
-            printf("filename[%zu] - expected %c, got %c\n", i, test_filename[i], dir_entry->filename[i]);
+        if (dir_entry.filename[i] != test_filename[i]) {
+            printf("filename[%zu] - expected %c, got %c\n", i,
+                test_filename[i], dir_entry.filename[i]);
             ret = -1;
         }
     }
@@ -278,24 +299,24 @@ int test_new_bootsector_constraints() {
     uint16_t expected_fat_size = FAT_SIZE_MEDIUM;
     uint16_t expected_bytes_per_sector = 512;
     uint8_t expected_sectors_per_cluster = 64;
-    struct boot_sector* sfs = initialize_filesystem_partition(fp, 0,
+    struct boot_sector sfs = initialize_filesystem_partition(fp, 0,
             init_fat_size, init_bytes_per_sector, init_sectors_per_cluster);
     int ret = 0;
-    if (sfs->entries_per_fat != expected_fat_size) {
+    if (sfs.entries_per_fat != expected_fat_size) {
        printf("entries_per_fat 1 - expected %d, got %d\n",
-                expected_fat_size, sfs->entries_per_fat);
+                expected_fat_size, sfs.entries_per_fat);
         ret = -1;
     }
 
-    if (sfs->bytes_per_sector != expected_bytes_per_sector) {
+    if (sfs.bytes_per_sector != expected_bytes_per_sector) {
         printf("bytes_per_sector 1 - expected %d, got %d\n",
-                expected_bytes_per_sector, sfs->bytes_per_sector);
+                expected_bytes_per_sector, sfs.bytes_per_sector);
         ret = -1;
     }
 
-    if (sfs->sectors_per_cluster != expected_sectors_per_cluster) {
+    if (sfs.sectors_per_cluster != expected_sectors_per_cluster) {
         printf("sectors_per_cluster 1 - expected %d, got %d\n",
-                expected_sectors_per_cluster, sfs->sectors_per_cluster);
+                expected_sectors_per_cluster, sfs.sectors_per_cluster);
         ret = -1;
     }
 
@@ -317,21 +338,21 @@ int test_new_bootsector_constraints() {
     expected_sectors_per_cluster = 64; /* 32K byte max cluster size */
     sfs = initialize_filesystem_partition(fp, 0,
             init_fat_size, init_bytes_per_sector, init_sectors_per_cluster);
-    if (sfs->entries_per_fat != expected_fat_size) {
+    if (sfs.entries_per_fat != expected_fat_size) {
        printf("entries_per_fat 2 - expected %d, got %d\n",
-                expected_fat_size, sfs->entries_per_fat);
+                expected_fat_size, sfs.entries_per_fat);
         ret = -1;
     }
 
-    if (sfs->bytes_per_sector != expected_bytes_per_sector) {
+    if (sfs.bytes_per_sector != expected_bytes_per_sector) {
         printf("bytes_per_sector 2 - expected %d, got %d\n",
-                expected_bytes_per_sector, sfs->bytes_per_sector);
+                expected_bytes_per_sector, sfs.bytes_per_sector);
         ret = -1;
     }
 
-    if (sfs->sectors_per_cluster != expected_sectors_per_cluster) {
+    if (sfs.sectors_per_cluster != expected_sectors_per_cluster) {
         printf("sectors_per_cluster 2 - expected %d, got %d\n",
-                expected_sectors_per_cluster, sfs->sectors_per_cluster);
+                expected_sectors_per_cluster, sfs.sectors_per_cluster);
         ret = -1;
     }
 
@@ -353,21 +374,21 @@ int test_new_bootsector_constraints() {
     expected_sectors_per_cluster = 16; /* uses MSB if not power of 2 */
     sfs = initialize_filesystem_partition(fp, 0,
             init_fat_size, init_bytes_per_sector, init_sectors_per_cluster);
-    if (sfs->entries_per_fat != expected_fat_size) {
+    if (sfs.entries_per_fat != expected_fat_size) {
        printf("entries_per_fat 3 - expected %d, got %d\n",
-                expected_fat_size, sfs->entries_per_fat);
+                expected_fat_size, sfs.entries_per_fat);
         ret = -1;
     }
 
-    if (sfs->bytes_per_sector != expected_bytes_per_sector) {
+    if (sfs.bytes_per_sector != expected_bytes_per_sector) {
         printf("bytes_per_sector 3 - expected %d, got %d\n",
-                expected_bytes_per_sector, sfs->bytes_per_sector);
+                expected_bytes_per_sector, sfs.bytes_per_sector);
         ret = -1;
     }
 
-    if (sfs->sectors_per_cluster != expected_sectors_per_cluster) {
+    if (sfs.sectors_per_cluster != expected_sectors_per_cluster) {
         printf("sectors_per_cluster 3 - expected %d, got %d\n",
-                expected_sectors_per_cluster, sfs->sectors_per_cluster);
+                expected_sectors_per_cluster, sfs.sectors_per_cluster);
         ret = -1;
     }
 
