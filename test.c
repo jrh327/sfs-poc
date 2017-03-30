@@ -299,7 +299,7 @@ int test_new_bootsector_constraints() {
     uint16_t expected_fat_size = FAT_SIZE_MEDIUM;
     uint16_t expected_bytes_per_sector = 512;
     uint8_t expected_sectors_per_cluster = 64;
-    struct boot_sector sfs = initialize_filesystem_partition(fp, 0,
+    struct sfs_filesystem sfs = initialize_filesystem_partition(fp, 0,
             init_fat_size, init_bytes_per_sector, init_sectors_per_cluster);
     int ret = 0;
     if (sfs.entries_per_fat != expected_fat_size) {

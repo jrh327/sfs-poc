@@ -15,7 +15,7 @@
  * Structure containing information stored in the boot sector of the
  * filesystem.
  */
-struct boot_sector {
+struct sfs_filesystem {
     FILE* fp;
     uint64_t partition_offset;
     uint16_t entries_per_fat;
@@ -41,9 +41,9 @@ struct fat_entry {
  * @param fat_size the number of entries in the file allocation table
  * @param bytes_per_sector the number of bytes in a data sector
  * @param sectors_per_cluster the number of sectors in a data cluster
- * @return the newly created boot sector
+ * @return the newly created filesystem
  */
-struct boot_sector initialize_new_filesystem(FILE* fp, uint16_t fat_size,
+struct sfs_filesystem initialize_new_filesystem(FILE* fp, uint16_t fat_size,
         uint16_t bytes_per_sector, uint8_t sectors_per_cluster);
 
 /**
@@ -54,9 +54,9 @@ struct boot_sector initialize_new_filesystem(FILE* fp, uint16_t fat_size,
  * @param fat_size the number of entries in the file allocation table
  * @param bytes_per_sector the number of bytes in a data sector
  * @param sectors_per_cluster the number of sectors in a data cluster
- * @return the newly created boot sector
+ * @return the newly created filesystem
  */
-struct boot_sector initialize_filesystem_partition(FILE* fp,
+struct sfs_filesystem initialize_filesystem_partition(FILE* fp,
         uint64_t partition_offset, uint16_t fat_size,
         uint16_t bytes_per_sector, uint8_t sectors_per_cluster);
 
@@ -64,14 +64,16 @@ struct boot_sector initialize_filesystem_partition(FILE* fp,
  * Read the boot sector of a SFS filesystem.
  * 
  * @param fp the file containing the SFS filesystem
- * @return the boot sector
+ * @return the filesystem
  */
-struct boot_sector load_filesystem(FILE* fp);
+struct sfs_filesystem load_filesystem(FILE* fp);
 
 /**
  * Close the filesystem.
+ * 
+ * @param sfs the filesystem
  */
-void close_filesystem(FILE* fp);
+void close_filesystem(struct sfs_filesystem sfs);
 
 /**
  * Get an entry from a file allocation table.
@@ -80,7 +82,7 @@ void close_filesystem(FILE* fp);
  * @param entry the location of the entry to retrieve
  * @return the value in the entry
  */
-struct fat_entry get_fat_entry(const struct boot_sector sfs,
+struct fat_entry get_fat_entry(const struct sfs_filesystem sfs,
     const struct fat_entry entry);
 
 /**
@@ -90,7 +92,7 @@ struct fat_entry get_fat_entry(const struct boot_sector sfs,
  * @param entry the location of the cluster to retrieve
  * @return the data in the cluster
  */
-uint8_t* get_cluster(const struct boot_sector sfs,
+uint8_t* get_cluster(const struct sfs_filesystem sfs,
         const struct fat_entry entry);
 
 #endif /* SFS_H */

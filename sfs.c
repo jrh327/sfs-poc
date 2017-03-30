@@ -1,13 +1,13 @@
 #include "sfs.h"
 #include "util.h"
 
-struct boot_sector initialize_new_filesystem(FILE* fp, uint16_t fat_size,
+struct sfs_filesystem initialize_new_filesystem(FILE* fp, uint16_t fat_size,
         uint16_t bytes_per_sector, uint8_t sectors_per_cluster) {
     return initialize_filesystem_partition(fp, 0, fat_size,
             bytes_per_sector, sectors_per_cluster);
 }
 
-struct boot_sector initialize_filesystem_partition(FILE* fp,
+struct sfs_filesystem initialize_filesystem_partition(FILE* fp,
         uint64_t partition_offset, uint16_t fat_size,
         uint16_t bytes_per_sector, uint8_t sectors_per_cluster) {
     if (fat_size != FAT_SIZE_SMALL
@@ -36,7 +36,7 @@ struct boot_sector initialize_filesystem_partition(FILE* fp,
         sectors_per_cluster = bitpos;
     }
 
-    struct boot_sector sfs = {
+    struct sfs_filesystem sfs = {
         .fp = fp,
         .partition_offset = partition_offset,
         .entries_per_fat = fat_size,
@@ -73,20 +73,20 @@ struct boot_sector initialize_filesystem_partition(FILE* fp,
     return sfs;
 }
 
-struct boot_sector load_filesystem(FILE* fp) {
+struct sfs_filesystem load_filesystem(FILE* fp) {
     /* read the first three bytes to check if this is an SFS filesystem */
     if (read_uint8(fp) != 'S'
           || read_uint8(fp) != 'F'
           || read_uint8(fp) != 'S') {
         printf("Given file does not represent an SFS filesystem.\n");
-        struct boot_sector empty = { 0 };
+        struct sfs_filesystem empty = { 0 };
         return empty;
     }
 
     /* skip to the actual data */
     fseek(fp, 8, SEEK_SET);
 
-    struct boot_sector sfs = {
+    struct sfs_filesystem sfs = {
         .fp = fp,
         .partition_offset = read_uint64(fp),
         .entries_per_fat = read_uint16(fp),
@@ -97,11 +97,11 @@ struct boot_sector load_filesystem(FILE* fp) {
     return sfs;
 }
 
-void close_filesystem(FILE* fp) {
-    fclose(fp);
+void close_filesystem(struct sfs_filesystem sfs) {
+    fclose(sfs.fp);
 }
 
-void move_to_fat(struct boot_sector sfs, uint16_t fat_number) {
+void move_to_fat(struct sfs_filesystem sfs, uint16_t fat_number) {
     FILE* fp = sfs.fp;
 
     /* move to the beginning of the first FAT */
@@ -128,7 +128,7 @@ void move_to_fat(struct boot_sector sfs, uint16_t fat_number) {
     }
 }
 
-struct fat_entry get_fat_entry(const struct boot_sector sfs,
+struct fat_entry get_fat_entry(const struct sfs_filesystem sfs,
         struct fat_entry entry) {
     move_to_fat(sfs, entry.fat_number);
 
@@ -145,7 +145,7 @@ struct fat_entry get_fat_entry(const struct boot_sector sfs,
     return new_entry;
 }
 
-void move_to_cluster(const struct boot_sector sfs,
+void move_to_cluster(const struct sfs_filesystem sfs,
         const struct fat_entry entry) {
     /* move to the FAT before the cluster's data block */
     move_to_fat(sfs, entry.cluster_number);
@@ -173,7 +173,7 @@ void move_to_cluster(const struct boot_sector sfs,
     }
 }
 
-uint8_t* get_cluster(const struct boot_sector sfs,
+uint8_t* get_cluster(const struct sfs_filesystem sfs,
         const struct fat_entry entry) {
     move_to_cluster(sfs, entry);
 
