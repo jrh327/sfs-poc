@@ -2,34 +2,9 @@
 #define SFS_H
 
 #include "includes.h"
+#include "structs.h"
 #include "files.h"
 #include "util.h"
-
-#define FAT_SIZE_SMALL 2048
-#define FAT_SIZE_MEDIUM 4096
-#define FAT_SIZE_LARGE 8192
-
-#define BOOT_SECTOR_SIZE 512
-
-/**
- * Structure containing information stored in the boot sector of the
- * filesystem.
- */
-struct sfs_filesystem {
-    FILE* fp;
-    uint64_t partition_offset;
-    uint16_t entries_per_fat;
-    uint16_t bytes_per_sector;
-    uint8_t sectors_per_cluster;
-};
-
-/**
- * Structure containing information stored in a allocation table entry.
- */
-struct fat_entry {
-    uint16_t fat_number;
-    uint16_t cluster_number;
-};
 
 /**
  * Create a new SFS filesystem with no partition offset.
@@ -74,25 +49,5 @@ struct sfs_filesystem load_filesystem(FILE* fp);
  * @param sfs the filesystem
  */
 void close_filesystem(struct sfs_filesystem sfs);
-
-/**
- * Get an entry from a file allocation table.
- * 
- * @param sfs the information in the filesystem's boot sector
- * @param entry the location of the entry to retrieve
- * @return the value in the entry
- */
-struct fat_entry get_fat_entry(const struct sfs_filesystem sfs,
-    const struct fat_entry entry);
-
-/**
- * Get the data from a cluster.
- * 
- * @param sfs the information in the filesystem's boot sector
- * @param entry the location of the cluster to retrieve
- * @return the data in the cluster
- */
-uint8_t* get_cluster(const struct sfs_filesystem sfs,
-        const struct fat_entry entry);
 
 #endif /* SFS_H */

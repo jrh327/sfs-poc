@@ -5,7 +5,7 @@ CC = gcc
 CFLAGS = -Wall
 LIBS = -lm
 
-HEADERS = includes.h files.h sfs.h util.h
+HEADERS = includes.h files.h sfs.h structs.h util.h
 SOURCES = files.c sfs.c util.c
 MAIN_SOURCE = main.c
 TEST_SOURCE = test.c

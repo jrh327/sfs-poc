@@ -138,7 +138,10 @@ int test_reading_directory_entry() {
         dir_entry.filename[i] = test_filename[i];
     }
 
-    write_directory_entry(fp, dir_entry);
+    struct sfs_filesystem sfs = {
+        .fp = fp
+    };
+    write_directory_entry(sfs, dir_entry);
 
     fclose(fp);
 
@@ -148,7 +151,8 @@ int test_reading_directory_entry() {
         return -1;
     }
 
-    dir_entry = read_directory_entry(fp);
+    sfs.fp = fp;
+    dir_entry = read_directory_entry(sfs);
 
     fclose(fp);
 
