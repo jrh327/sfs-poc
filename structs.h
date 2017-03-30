@@ -20,6 +20,14 @@ struct sfs_filesystem {
 };
 
 /**
+ * Structure containing information stored in a allocation table entry.
+ */
+struct fat_entry {
+    uint16_t fat_number;
+    uint16_t cluster_number;
+};
+
+/**
  * Structure describing a file entry in a directory.
  * 
  * Directory entries are stored in 32 bytes. The layout of these bytes is:
@@ -43,9 +51,16 @@ struct sfs_filesystem {
  * 0x15: Filename (variable length, UTF-8 encoded)
  * 
  * For a file whose name is longer than 11 bytes, the rest of the name shall
- * be stored in the following entries
+ * be stored in the directory entries immediately following.
+ * 
+ * The location and dir_entry_number indicate where in the filesystem to find
+ * this particular directory entry. They are generated when the directory
+ * entry is read from its parent directory, and are not stored in the
+ * filesystem itself.
  */
 struct directory_entry {
+    struct fat_entry location;
+    uint16_t dir_entry_number;
     uint8_t reserved;
     uint8_t attributes;
     uint8_t created_month;
@@ -67,14 +82,6 @@ struct directory_entry {
     uint32_t file_length;
     uint8_t filename_entries;
     uint8_t filename[11];
-};
-
-/**
- * Structure containing information stored in a allocation table entry.
- */
-struct fat_entry {
-    uint16_t fat_number;
-    uint16_t cluster_number;
 };
 
 #endif /* STRUCTS_H */
