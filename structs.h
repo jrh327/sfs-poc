@@ -59,6 +59,8 @@ struct fat_entry {
  * filesystem itself.
  */
 struct directory_entry {
+    struct directory_entry* parent;
+    struct directory_entry** contents;
     struct fat_entry location;
     uint16_t dir_entry_number;
     uint8_t reserved;
