@@ -14,7 +14,7 @@ int test_writing_uint16() {
     FILE* fp = fopen(filename, "wb");
     if (fp == NULL) {
         printf("error creating file\n");
-        return -1;
+        return (-1);
     }
     const uint16_t test_val = 0x1234;
     write_uint16(fp, test_val);
@@ -23,7 +23,7 @@ int test_writing_uint16() {
     fp = fopen(filename, "rb");
     if (fp == NULL) {
         printf("error reading file\n");
-        return -1;
+        return (-1);
     }
 
     int ret = 0;
@@ -43,14 +43,14 @@ int test_writing_uint16() {
 
     delete_file();
 
-    return ret;
+    return (ret);
 }
 
 int test_reading_uint16() {
     FILE* fp = fopen(filename, "wb");
     if (fp == NULL) {
         printf("error creating file\n");
-        return -1;
+        return (-1);
     }
 
     uint8_t byte = 0x12;
@@ -62,7 +62,7 @@ int test_reading_uint16() {
     fp = fopen(filename, "rb");
     if (fp == NULL) {
         printf("error reading file\n");
-        return -1;
+        return (-1);
     }
 
     int ret = 0;
@@ -76,14 +76,14 @@ int test_reading_uint16() {
 
     delete_file();
 
-    return ret;
+    return (ret);
 }
 
 int test_reading_directory_entry() {
     FILE* fp = fopen(filename, "wb");
     if (fp == NULL) {
         printf("error creating file\n");
-        return -1;
+        return (-1);
     }
 
     const uint8_t test_reserved = 0;
@@ -148,11 +148,12 @@ int test_reading_directory_entry() {
     fp = fopen(filename, "rb");
     if (fp == NULL) {
         printf("error reading file\n");
-        return -1;
+        return (-1);
     }
 
     sfs.fp = fp;
-    dir_entry = read_directory_entry(sfs);
+    struct directory_entry empty = { 0 };
+    dir_entry = read_directory_entry(sfs, &empty);
 
     fclose(fp);
 
@@ -287,14 +288,14 @@ int test_reading_directory_entry() {
         }
     }
 
-    return ret;
+    return (ret);
 }
 
 int test_new_bootsector_constraints() {
     FILE* fp = fopen(filename, "wb");
     if (fp == NULL) {
         printf("error creating file\n");
-        return -1;
+        return (-1);
     }
 
     uint16_t init_fat_size = FAT_SIZE_MEDIUM;
@@ -331,7 +332,7 @@ int test_new_bootsector_constraints() {
     fp = fopen(filename, "wb");
     if (fp == NULL) {
         printf("error creating file\n");
-        return -1;
+        return (-1);
     }
 
     init_fat_size = FAT_SIZE_MEDIUM - 1;
@@ -367,7 +368,7 @@ int test_new_bootsector_constraints() {
     fp = fopen(filename, "wb");
     if (fp == NULL) {
         printf("error creating file\n");
-        return -1;
+        return (-1);
     }
 
     init_fat_size = FAT_SIZE_MEDIUM;
@@ -400,7 +401,7 @@ int test_new_bootsector_constraints() {
 
     delete_file();
 
-    return ret;
+    return (ret);
 }
 
 void run_test(char* test_name, int (*test)()) {

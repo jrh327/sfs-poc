@@ -3,8 +3,8 @@
 
 struct sfs_filesystem initialize_new_filesystem(FILE* fp, uint16_t fat_size,
         uint16_t bytes_per_sector, uint8_t sectors_per_cluster) {
-    return initialize_filesystem_partition(fp, 0, fat_size,
-            bytes_per_sector, sectors_per_cluster);
+    return (initialize_filesystem_partition(fp, 0, fat_size,
+            bytes_per_sector, sectors_per_cluster));
 }
 
 struct sfs_filesystem initialize_filesystem_partition(FILE* fp,
@@ -70,7 +70,7 @@ struct sfs_filesystem initialize_filesystem_partition(FILE* fp,
         fwrite(&arr_cluster_sector, sizeof(arr_cluster_sector), 1, fp);
     }
 
-    return sfs;
+    return (sfs);
 }
 
 struct sfs_filesystem load_filesystem(FILE* fp) {
@@ -80,7 +80,7 @@ struct sfs_filesystem load_filesystem(FILE* fp) {
           || read_uint8(fp) != 'S') {
         printf("Given file does not represent an SFS filesystem.\n");
         struct sfs_filesystem empty = { 0 };
-        return empty;
+        return (empty);
     }
 
     /* skip to the actual data */
@@ -94,7 +94,7 @@ struct sfs_filesystem load_filesystem(FILE* fp) {
         .sectors_per_cluster = read_uint8(fp)
     };
 
-    return sfs;
+    return (sfs);
 }
 
 void close_filesystem(struct sfs_filesystem sfs) {

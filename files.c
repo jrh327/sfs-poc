@@ -1,6 +1,7 @@
 #include "files.h"
 
-struct directory_entry read_directory_entry(const struct sfs_filesystem sfs) {
+struct directory_entry read_directory_entry(const struct sfs_filesystem sfs,
+        struct directory_entry* parent) {
     uint8_t entry[32] = { 0 };
     fread(&entry, sizeof(entry), 1, sfs.fp);
 
@@ -27,6 +28,7 @@ struct directory_entry read_directory_entry(const struct sfs_filesystem sfs) {
     uint8_t modified_millisecond = entry[11] & 0x7f;
 
     struct directory_entry dir_entry = {
+        .parent = parent,
         .reserved = entry[0],
         .attributes = entry[1],
 
@@ -56,7 +58,7 @@ struct directory_entry read_directory_entry(const struct sfs_filesystem sfs) {
         dir_entry.filename[i] = entry[21 + i];
     }
 
-    return dir_entry;
+    return (dir_entry);
 }
 
 void write_directory_entry(const struct sfs_filesystem sfs,
@@ -137,7 +139,7 @@ struct fat_entry get_fat_entry(const struct sfs_filesystem sfs,
             .fat_number = entry_fat_number,
             .cluster_number = entry_cluster_number
     };
-    return new_entry;
+    return (new_entry);
 }
 
 void put_fat_entry(const struct sfs_filesystem sfs,
@@ -187,7 +189,7 @@ uint8_t* read_file_cluster(const struct sfs_filesystem sfs,
     uint8_t* cluster = malloc(cluster_size);
 
     fread(cluster, cluster_size, 1, sfs.fp);
-    return cluster;
+    return (cluster);
 }
 
 void write_file_cluster(const struct sfs_filesystem sfs,

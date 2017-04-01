@@ -11,7 +11,8 @@
  * @param sfs the filesystem to read from
  * @return the directory entry
  */
-struct directory_entry read_directory_entry(const struct sfs_filesystem sfs);
+struct directory_entry read_directory_entry(const struct sfs_filesystem sfs,
+        struct directory_entry* parent);
 
 /**
  * Write a directory entry to the given file.

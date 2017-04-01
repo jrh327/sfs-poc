@@ -10,29 +10,29 @@ const int ENDIANNESS = 1;
 
 uint16_t convert_uint16(uint16_t value) {
     if (IS_BIGENDIAN) {
-        return value;
+        return (value);
     } else {
         uint8_t byte1 = (value & 0xff);
         uint8_t byte2 = (value >> 8) & 0xff;
-        return (byte1 << 8) | byte2;
+        return ((byte1 << 8) | byte2);
     }
 }
 
 uint32_t convert_uint32(uint32_t value) {
     if (IS_BIGENDIAN) {
-        return value;
+        return (value);
     } else {
         uint8_t byte1 = (value & 0xff);
         uint8_t byte2 = (value >> 8) & 0xff;
         uint8_t byte3 = (value >> 16) & 0xff;
         uint8_t byte4 = (value >> 24) & 0xff;
-        return (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4;
+        return ((byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4);
     }
 }
 
 uint64_t convert_uint64(uint64_t value) {
     if (IS_BIGENDIAN) {
-        return value;
+        return (value);
     } else {
         uint8_t byte1 = (value & 0xff);
         uint8_t byte2 = (value >> 8) & 0xff;
@@ -52,32 +52,32 @@ uint64_t convert_uint64(uint64_t value) {
         value = (value << 8) | byte6;
         value = (value << 8) | byte7;
         value = (value << 8) | byte8;
-        return value;
+        return (value);
     }
 }
 
 uint8_t read_uint8(FILE* fp) {
     uint8_t value;
     fread(&value, sizeof(value), 1, fp);
-    return value;
+    return (value);
 }
 
 uint16_t read_uint16(FILE* fp) {
     uint16_t value;
     fread(&value, sizeof(value), 1, fp);
-    return convert_uint16(value);
+    return (convert_uint16(value));
 }
 
 uint32_t read_uint32(FILE* fp) {
     uint32_t value;
     fread(&value, sizeof(value), 1, fp);
-    return convert_uint32(value);
+    return (convert_uint32(value));
 }
 
 uint64_t read_uint64(FILE* fp) {
     uint64_t value;
     fread(&value, sizeof(value), 1, fp);
-    return convert_uint64(value);
+    return (convert_uint64(value));
 }
 
 void write_uint8(FILE* fp, uint8_t value) {
@@ -104,7 +104,7 @@ uint16_t get_uint16(uint8_t arr[], size_t pos) {
     for (size_t i = 0; i < 2; i++) {
         value = (value << 8) | arr[pos + i];
     }
-    return convert_uint16(value);
+    return (convert_uint16(value));
 }
 
 uint32_t get_uint32(uint8_t arr[], size_t pos) {
@@ -112,7 +112,7 @@ uint32_t get_uint32(uint8_t arr[], size_t pos) {
     for (size_t i = 0; i < 4; i++) {
         value = (value << 8) | arr[pos + i];
     }
-    return convert_uint32(value);
+    return (convert_uint32(value));
 }
 
 uint64_t get_uint64(uint8_t arr[], size_t pos) {
@@ -120,7 +120,7 @@ uint64_t get_uint64(uint8_t arr[], size_t pos) {
     for (size_t i = 0; i < 8; i++) {
         value = (value << 8) | arr[pos + i];
     }
-    return convert_uint64(value);
+    return (convert_uint64(value));
 }
 
 void put_uint16(uint8_t arr[], uint16_t value, size_t pos) {
