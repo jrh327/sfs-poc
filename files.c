@@ -95,6 +95,17 @@ void write_directory_entry(const struct sfs_filesystem sfs,
     fwrite(&entry, sizeof(entry), 1, sfs.fp);
 }
 
+struct directory_entry get_root_directory_entry(const struct sfs_filesystem sfs) {
+    struct directory_entry root = { 0 };
+
+    root.parent = NULL;
+    root.table_number = 0; // first file allocation table
+    root.first_cluster = 0; // first cluster
+    root.file_length = 0; // directories don't have file length
+
+    return (root);
+}
+
 void move_to_fat(struct sfs_filesystem sfs, uint16_t fat_number) {
     FILE* fp = sfs.fp;
 

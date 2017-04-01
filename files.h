@@ -6,7 +6,7 @@
 #include "util.h"
 
 /**
- * Read a directory entry from the given file.
+ * Read a directory entry from the filesystem.
  * 
  * @param sfs the filesystem to read from
  * @return the directory entry
@@ -15,13 +15,21 @@ struct directory_entry read_directory_entry(const struct sfs_filesystem sfs,
         struct directory_entry* parent);
 
 /**
- * Write a directory entry to the given file.
+ * Write a directory entry to the filesystem.
  * 
  * @param sfs the filesystem to write to
  * @param dir_entry the directory entry to write
  */
 void write_directory_entry(const struct sfs_filesystem sfs,
         struct directory_entry dir_entry);
+
+/**
+ * Retrieve the directory entry for the root directory of the filesystem.
+ *
+ * @param sfs the filesystem to read from
+ * @return the root directory's entry
+ */
+struct directory_entry get_root_directory_entry(const struct sfs_filesystem sfs);
 
 /**
  * Get an entry from a file allocation table.
@@ -33,9 +41,9 @@ void write_directory_entry(const struct sfs_filesystem sfs,
 struct fat_entry get_fat_entry(const struct sfs_filesystem sfs,
         const struct fat_entry entry);
 /**
- * Get an entry from a file allocation table.
+ * Put an entry into a file allocation table.
  * 
- * @param sfs the filesystem to read from
+ * @param sfs the filesystem to write to
  * @param location the location of the entry to write
  * @param entry the entry to write
  */
