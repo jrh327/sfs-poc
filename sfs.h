@@ -32,8 +32,8 @@ struct sfs_filesystem initialize_new_filesystem(FILE* fp, uint16_t fat_size,
  * @return the newly created filesystem
  */
 struct sfs_filesystem initialize_filesystem_partition(FILE* fp,
-        uint64_t partition_offset, uint16_t fat_size,
-        uint16_t bytes_per_sector, uint8_t sectors_per_cluster);
+        uint64_t partition_offset, uint16_t fat_size, uint16_t bytes_per_sector,
+        uint8_t sectors_per_cluster);
 
 /**
  * Read the boot sector of a SFS filesystem.

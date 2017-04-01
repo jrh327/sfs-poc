@@ -3,15 +3,14 @@
 
 struct sfs_filesystem initialize_new_filesystem(FILE* fp, uint16_t fat_size,
         uint16_t bytes_per_sector, uint8_t sectors_per_cluster) {
-    return (initialize_filesystem_partition(fp, 0, fat_size,
-            bytes_per_sector, sectors_per_cluster));
+    return (initialize_filesystem_partition(fp, 0, fat_size, bytes_per_sector,
+            sectors_per_cluster));
 }
 
 struct sfs_filesystem initialize_filesystem_partition(FILE* fp,
-        uint64_t partition_offset, uint16_t fat_size,
-        uint16_t bytes_per_sector, uint8_t sectors_per_cluster) {
-    if (fat_size != FAT_SIZE_SMALL
-            && fat_size != FAT_SIZE_MEDIUM
+        uint64_t partition_offset, uint16_t fat_size, uint16_t bytes_per_sector,
+        uint8_t sectors_per_cluster) {
+    if (fat_size != FAT_SIZE_SMALL && fat_size != FAT_SIZE_MEDIUM
             && fat_size != FAT_SIZE_LARGE) {
         fat_size = FAT_SIZE_MEDIUM;
     }
@@ -37,15 +36,15 @@ struct sfs_filesystem initialize_filesystem_partition(FILE* fp,
     }
 
     struct sfs_filesystem sfs = {
-        .fp = fp,
-        .partition_offset = partition_offset,
-        .entries_per_fat = fat_size,
-        .bytes_per_sector = bytes_per_sector,
-        .sectors_per_cluster = sectors_per_cluster,
+            .fp = fp,
+            .partition_offset = partition_offset,
+            .entries_per_fat = fat_size,
+            .bytes_per_sector = bytes_per_sector,
+            .sectors_per_cluster = sectors_per_cluster
     };
 
     uint8_t arr_boot_sector[BOOT_SECTOR_SIZE] = {
-        'S', 'F', 'S', ' ', 'v', '1', '.', '0'
+            'S', 'F', 'S', ' ', 'v', '1', '.', '0'
     };
 
     put_uint64(arr_boot_sector, sfs.partition_offset, 8);
@@ -55,10 +54,10 @@ struct sfs_filesystem initialize_filesystem_partition(FILE* fp,
 
     fwrite(&arr_boot_sector, sizeof(arr_boot_sector), 1, fp);
 
-
     /* initialize the file allocation table */
     uint8_t arr_fat_sector[512];
-    size_t num_fat_sectors = (sfs.entries_per_fat * sizeof(struct fat_entry)) / 512;
+    size_t num_fat_sectors = (sfs.entries_per_fat * sizeof(struct fat_entry))
+            / 512;
     for (size_t i = 0; i < num_fat_sectors; i++) {
         fwrite(&arr_fat_sector, sizeof(arr_fat_sector), 1, fp);
     }
@@ -75,9 +74,8 @@ struct sfs_filesystem initialize_filesystem_partition(FILE* fp,
 
 struct sfs_filesystem load_filesystem(FILE* fp) {
     /* read the first three bytes to check if this is an SFS filesystem */
-    if (read_uint8(fp) != 'S'
-          || read_uint8(fp) != 'F'
-          || read_uint8(fp) != 'S') {
+    if (read_uint8(fp) != 'S' || read_uint8(fp) != 'F'
+            || read_uint8(fp) != 'S') {
         printf("Given file does not represent an SFS filesystem.\n");
         struct sfs_filesystem empty = { 0 };
         return (empty);
@@ -87,11 +85,11 @@ struct sfs_filesystem load_filesystem(FILE* fp) {
     fseek(fp, 8, SEEK_SET);
 
     struct sfs_filesystem sfs = {
-        .fp = fp,
-        .partition_offset = read_uint64(fp),
-        .entries_per_fat = read_uint16(fp),
-        .bytes_per_sector = read_uint16(fp),
-        .sectors_per_cluster = read_uint8(fp)
+            .fp = fp,
+            .partition_offset = read_uint64(fp),
+            .entries_per_fat = read_uint16(fp),
+            .bytes_per_sector = read_uint16(fp),
+            .sectors_per_cluster = read_uint8(fp)
     };
 
     return (sfs);
