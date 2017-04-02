@@ -11,7 +11,7 @@
  * @param sfs the filesystem to read from
  * @return the directory entry
  */
-struct directory_entry read_directory_entry(const struct sfs_filesystem sfs,
+struct directory_entry* read_directory_entry(const struct sfs_filesystem sfs,
         struct directory_entry* parent);
 
 /**
@@ -29,7 +29,16 @@ void write_directory_entry(const struct sfs_filesystem sfs,
  * @param sfs the filesystem to read from
  * @return the root directory's entry
  */
-struct directory_entry get_root_directory_entry(const struct sfs_filesystem sfs);
+struct directory_entry* get_root_directory_entry(const struct sfs_filesystem sfs);
+
+/**
+ * Retrieve the directory entries within the given directory.
+ *
+ * @param sfs the filesystem to read from
+ * @param parent the directory to scan for entries
+ */
+void get_directory_entries(const struct sfs_filesystem sfs,
+        struct directory_entry* parent);
 
 /**
  * Get an entry from a file allocation table.

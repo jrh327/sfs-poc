@@ -1,9 +1,26 @@
 #include "files.h"
 
-struct directory_entry read_directory_entry(const struct sfs_filesystem sfs,
+void move_to_fat(struct sfs_filesystem sfs, uint16_t fat_number);
+void move_to_cluster(const struct sfs_filesystem sfs,
+        const struct fat_entry entry);
+
+struct directory_entry* read_directory_entry(const struct sfs_filesystem sfs,
         struct directory_entry* parent) {
-    uint8_t entry[32] = { 0 };
+    uint8_t entry[DIR_ENTRY_SIZE] = { 0 };
     fread(&entry, sizeof(entry), 1, sfs.fp);
+
+    int empty_entry = 1;
+    for (size_t i = 0; i < DIR_ENTRY_SIZE; i++) {
+        if (entry[i] != 0) {
+            empty_entry = 0;
+            break;
+        }
+    }
+
+    /* nothing in the entry, don't waste time initializing */
+    if (empty_entry) {
+        return (calloc(1, sizeof(struct directory_entry)));
+    }
 
     uint8_t created_month = (entry[2] & 0xf0) >> 4;
     uint8_t created_day = ((entry[2] & 0x0f) << 1) | ((entry[3] & 0x80) >> 7);
@@ -24,35 +41,35 @@ struct directory_entry read_directory_entry(const struct sfs_filesystem sfs,
             | ((entry[11] & 0x80) >> 7);
     uint8_t modified_millisecond = entry[11] & 0x7f;
 
-    struct directory_entry dir_entry = {
-            .parent = parent,
-            .reserved = entry[0],
-            .attributes = entry[1],
+    struct directory_entry* dir_entry = malloc(sizeof(struct directory_entry));
+    dir_entry->parent = parent;
+    dir_entry->contents = NULL; /* don't read contents until requested */
+    dir_entry->reserved = entry[0];
+    dir_entry->attributes = entry[1];
 
-            .created_month = created_month,
-            .created_day = created_day,
-            .created_year = created_year,
-            .created_hour = created_hour,
-            .created_minute = created_minute,
-            .created_second = created_second,
-            .created_millisecond = created_millisecond,
+    dir_entry->created_month = created_month;
+    dir_entry->created_day = created_day;
+    dir_entry->created_year = created_year;
+    dir_entry->created_hour = created_hour;
+    dir_entry->created_minute = created_minute;
+    dir_entry->created_second = created_second;
+    dir_entry->created_millisecond = created_millisecond;
 
-            .modified_month = modified_month,
-            .modified_day = modified_day,
-            .modified_year = modified_year,
-            .modified_hour = modified_hour,
-            .modified_minute = modified_minute,
-            .modified_second = modified_second,
-            .modified_millisecond = modified_millisecond,
+    dir_entry->modified_month = modified_month;
+    dir_entry->modified_day = modified_day;
+    dir_entry->modified_year = modified_year;
+    dir_entry->modified_hour = modified_hour;
+    dir_entry->modified_minute = modified_minute;
+    dir_entry->modified_second = modified_second;
+    dir_entry->modified_millisecond = modified_millisecond;
 
-            .table_number = get_uint16(entry, 12),
-            .first_cluster = get_uint16(entry, 14),
-            .file_length = get_uint32(entry, 16)
-    };
-    dir_entry.filename_entries = entry[20];
+    dir_entry->table_number = get_uint16(entry, 12);
+    dir_entry->first_cluster = get_uint16(entry, 14);
+    dir_entry->file_length = get_uint32(entry, 16);
+    dir_entry->filename_entries = entry[20];
 
     for (size_t i = 0; i < 11; i++) {
-        dir_entry.filename[i] = entry[21 + i];
+        dir_entry->filename[i] = entry[21 + i];
     }
 
     return (dir_entry);
@@ -60,7 +77,7 @@ struct directory_entry read_directory_entry(const struct sfs_filesystem sfs,
 
 void write_directory_entry(const struct sfs_filesystem sfs,
         struct directory_entry dir_entry) {
-    uint8_t entry[32] = { 0 };
+    uint8_t entry[DIR_ENTRY_SIZE] = { 0 };
 
     entry[0] = dir_entry.reserved;
     entry[1] = dir_entry.attributes;
@@ -88,6 +105,7 @@ void write_directory_entry(const struct sfs_filesystem sfs,
 
     entry[20] = dir_entry.filename_entries;
 
+    /* TODO: handle filenames longer than 11 bytes */
     for (size_t i = 0; i < 11; i++) {
         entry[21 + i] = dir_entry.filename[i];
     }
@@ -95,15 +113,51 @@ void write_directory_entry(const struct sfs_filesystem sfs,
     fwrite(&entry, sizeof(entry), 1, sfs.fp);
 }
 
-struct directory_entry get_root_directory_entry(const struct sfs_filesystem sfs) {
-    struct directory_entry root = { 0 };
+struct directory_entry* get_root_directory_entry(
+        const struct sfs_filesystem sfs) {
+    struct directory_entry* root = malloc(sizeof(struct directory_entry));
 
-    root.parent = NULL;
-    root.table_number = 0; // first file allocation table
-    root.first_cluster = 0; // first cluster
-    root.file_length = 0; // directories don't have file length
+    root->parent = root; /* set root as its own parent */
+    root->table_number = 0; /* first file allocation table */
+    root->first_cluster = 0; /* first cluster */
+    root->file_length = 0; /* directories don't have file length */
 
     return (root);
+}
+
+void get_directory_entries(const struct sfs_filesystem sfs,
+        struct directory_entry* parent) {
+    struct fat_entry fat = {
+            .fat_number = parent->table_number,
+            .cluster_number = parent->first_cluster
+    };
+
+    move_to_cluster(sfs, fat);
+
+    uint8_t found_end = 0;
+    size_t dir_entries_per_cluster = (sfs.bytes_per_sector
+            * sfs.sectors_per_cluster) / DIR_ENTRY_SIZE;
+    while (!found_end) {
+        for (size_t i = 0; i < dir_entries_per_cluster; i++) {
+            struct directory_entry* dir_entry = read_directory_entry(sfs, parent);
+            /* entry is guaranteed to be empty if parent is NULL */
+            if (dir_entry->parent == NULL) {
+                found_end = 1;
+                free(dir_entry);
+                break;
+            }
+
+            struct directory_list* next = malloc(sizeof(struct directory_list));
+            next->entry = dir_entry;
+            next->next = parent->contents;
+            parent->contents = next;
+        }
+
+        if (!found_end) {
+            fat = get_fat_entry(sfs, fat);
+            move_to_cluster(sfs, fat);
+        }
+    }
 }
 
 void move_to_fat(struct sfs_filesystem sfs, uint16_t fat_number) {
@@ -120,7 +174,7 @@ void move_to_fat(struct sfs_filesystem sfs, uint16_t fat_number) {
      * loop until the correct FAT is found. FAT number is zero-based,
      * if fat_number == 0, already at correct FAT and this is skipped
      */
-    uint16_t fat_size = sfs.entries_per_fat * sizeof(struct fat_entry);
+    uint16_t fat_size = sfs.entries_per_fat * FAT_ENTRY_SIZE;
     uint32_t data_block_size = sfs.bytes_per_sector * sfs.sectors_per_cluster;
     while (fat_number) {
         /* move to the end of the current FAT */
@@ -138,7 +192,7 @@ struct fat_entry get_fat_entry(const struct sfs_filesystem sfs,
     move_to_fat(sfs, entry.fat_number);
 
     FILE* fp = sfs.fp;
-    fseek(fp, entry.cluster_number * sizeof(struct fat_entry), SEEK_CUR);
+    fseek(fp, entry.cluster_number * FAT_ENTRY_SIZE, SEEK_CUR);
 
     uint16_t entry_fat_number = read_uint16(fp);
     uint16_t entry_cluster_number = read_uint16(fp);
@@ -155,7 +209,7 @@ void put_fat_entry(const struct sfs_filesystem sfs,
     move_to_fat(sfs, entry.fat_number);
 
     FILE* fp = sfs.fp;
-    fseek(fp, entry.cluster_number * sizeof(struct fat_entry), SEEK_CUR);
+    fseek(fp, entry.cluster_number * FAT_ENTRY_SIZE, SEEK_CUR);
 
     write_uint16(fp, entry.fat_number);
     write_uint16(fp, entry.cluster_number);
@@ -169,7 +223,7 @@ void move_to_cluster(const struct sfs_filesystem sfs,
     FILE* fp = sfs.fp;
 
     /* move to the end of the current FAT */
-    fseek(fp, sfs.entries_per_fat * sizeof(struct fat_entry), SEEK_CUR);
+    fseek(fp, sfs.entries_per_fat * FAT_ENTRY_SIZE, SEEK_CUR);
 
     if (entry.cluster_number == 0) {
         return;

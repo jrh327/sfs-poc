@@ -1,11 +1,17 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
+#define FAT_ENTRY_SIZE 4
+#define DIR_ENTRY_SIZE 32
+
 #define FAT_SIZE_SMALL 2048
 #define FAT_SIZE_MEDIUM 4096
 #define FAT_SIZE_LARGE 8192
 
 #define BOOT_SECTOR_SIZE 512
+
+/* forward declaration */
+struct directory_list;
 
 /**
  * Structure containing information stored in the boot sector of the
@@ -60,8 +66,7 @@ struct fat_entry {
  */
 struct directory_entry {
     struct directory_entry* parent;
-    struct directory_entry** contents;
-    struct fat_entry location;
+    struct directory_list* contents;
     uint16_t dir_entry_number;
     uint8_t reserved;
     uint8_t attributes;
@@ -84,6 +89,14 @@ struct directory_entry {
     uint32_t file_length;
     uint8_t filename_entries;
     uint8_t filename[11];
+};
+
+/**
+ * Linked list of directory entries.
+ */
+struct directory_list {
+    struct directory_entry* entry;
+    struct directory_list* next;
 };
 
 #endif /* STRUCTS_H */

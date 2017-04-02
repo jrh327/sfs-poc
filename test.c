@@ -113,36 +113,36 @@ int test_reading_directory_entry() {
             'f', 'i', 'l', 'e', 'n', 'a', 'm', 'e', 't', 'x', 't'
     };
 
-    struct directory_entry dir_entry = {
-            .reserved = test_reserved,
-            .attributes = test_attributes,
-            .created_month = test_created_month,
-            .created_day = test_created_day,
-            .created_year = test_created_year,
-            .created_hour = test_created_hour,
-            .created_minute = test_created_minute,
-            .created_second = test_created_second,
-            .created_millisecond = test_created_milli,
-            .modified_month = test_modified_month,
-            .modified_day = test_modified_day,
-            .modified_year = test_modified_year,
-            .modified_hour = test_modified_hour,
-            .modified_minute = test_modified_minute,
-            .modified_second = test_modified_second,
-            .modified_millisecond = test_modified_milli,
-            .table_number = test_table,
-            .first_cluster = test_cluster,
-            .file_length = test_file_length,
-            .filename_entries = test_entries
-    };
+    struct directory_entry* dir_entry = malloc(sizeof(struct directory_entry));
+    dir_entry->reserved = test_reserved;
+    dir_entry->attributes = test_attributes;
+    dir_entry->created_month = test_created_month;
+    dir_entry->created_day = test_created_day;
+    dir_entry->created_year = test_created_year;
+    dir_entry->created_hour = test_created_hour;
+    dir_entry->created_minute = test_created_minute;
+    dir_entry->created_second = test_created_second;
+    dir_entry->created_millisecond = test_created_milli;
+    dir_entry->modified_month = test_modified_month;
+    dir_entry->modified_day = test_modified_day;
+    dir_entry->modified_year = test_modified_year;
+    dir_entry->modified_hour = test_modified_hour;
+    dir_entry->modified_minute = test_modified_minute;
+    dir_entry->modified_second = test_modified_second;
+    dir_entry->modified_millisecond = test_modified_milli;
+    dir_entry->table_number = test_table;
+    dir_entry->first_cluster = test_cluster;
+    dir_entry->file_length = test_file_length;
+    dir_entry->filename_entries = test_entries;
 
     for (size_t i = 0; i < 11; i++) {
-        dir_entry.filename[i] = test_filename[i];
+        dir_entry->filename[i] = test_filename[i];
     }
 
     struct sfs_filesystem sfs = { .fp = fp };
-    write_directory_entry(sfs, dir_entry);
+    write_directory_entry(sfs, *dir_entry);
 
+    free(dir_entry);
     fclose(fp);
 
     fp = fopen(filename, "rb");
@@ -160,130 +160,130 @@ int test_reading_directory_entry() {
     delete_file();
 
     int ret = 0;
-    if (dir_entry.reserved != test_reserved) {
+    if (dir_entry->reserved != test_reserved) {
         printf("reserved - expected %d, got %d\n", test_reserved,
-                dir_entry.reserved);
+                dir_entry->reserved);
         ret = -1;
     }
 
-    if (dir_entry.attributes != test_attributes) {
+    if (dir_entry->attributes != test_attributes) {
         printf("attributes - expected %d, got %d\n", test_attributes,
-                dir_entry.attributes);
+                dir_entry->attributes);
         ret = -1;
     }
 
-    if (dir_entry.created_month != test_created_month) {
+    if (dir_entry->created_month != test_created_month) {
         printf("created_month - expected %d, got %d\n", test_created_month,
-                dir_entry.created_month);
+                dir_entry->created_month);
         ret = -1;
     }
 
-    if (dir_entry.created_day != test_created_day) {
+    if (dir_entry->created_day != test_created_day) {
         printf("created_day - expected %d, got %d\n", test_created_day,
-                dir_entry.created_day);
+                dir_entry->created_day);
         ret = -1;
     }
 
-    if (dir_entry.created_year != test_created_year) {
+    if (dir_entry->created_year != test_created_year) {
         printf("created_year - expected %d, got %d\n", test_created_year,
-                dir_entry.created_year);
+                dir_entry->created_year);
         ret = -1;
     }
 
-    if (dir_entry.created_hour != test_created_hour) {
+    if (dir_entry->created_hour != test_created_hour) {
         printf("created_hour - expected %d, got %d\n", test_created_hour,
-                dir_entry.created_hour);
+                dir_entry->created_hour);
         ret = -1;
     }
 
-    if (dir_entry.created_minute != test_created_minute) {
+    if (dir_entry->created_minute != test_created_minute) {
         printf("created_minute - expected %d, got %d\n", test_created_minute,
-                dir_entry.created_minute);
+                dir_entry->created_minute);
         ret = -1;
     }
 
-    if (dir_entry.created_second != test_created_second) {
+    if (dir_entry->created_second != test_created_second) {
         printf("created_second - expected %d, got %d\n", test_created_second,
-                dir_entry.created_second);
+                dir_entry->created_second);
         ret = -1;
     }
 
-    if (dir_entry.created_millisecond != test_created_milli) {
+    if (dir_entry->created_millisecond != test_created_milli) {
         printf("created_millisecond - expected %d, got %d\n",
-                test_created_milli, dir_entry.created_millisecond);
+                test_created_milli, dir_entry->created_millisecond);
         ret = -1;
     }
 
-    if (dir_entry.modified_month != test_modified_month) {
+    if (dir_entry->modified_month != test_modified_month) {
         printf("modified_month - expected %d, got %d\n", test_modified_month,
-                dir_entry.modified_month);
+                dir_entry->modified_month);
         ret = -1;
     }
 
-    if (dir_entry.modified_day != test_modified_day) {
+    if (dir_entry->modified_day != test_modified_day) {
         printf("modified_day - expected %d, got %d\n", test_modified_day,
-                dir_entry.modified_day);
+                dir_entry->modified_day);
         ret = -1;
     }
 
-    if (dir_entry.modified_year != test_modified_year) {
+    if (dir_entry->modified_year != test_modified_year) {
         printf("modified_year - expected %d, got %d\n", test_modified_year,
-                dir_entry.modified_year);
+                dir_entry->modified_year);
         ret = -1;
     }
 
-    if (dir_entry.modified_hour != test_modified_hour) {
+    if (dir_entry->modified_hour != test_modified_hour) {
         printf("modified_hour - expected %d, got %d\n", test_modified_hour,
-                dir_entry.modified_hour);
+                dir_entry->modified_hour);
         ret = -1;
     }
 
-    if (dir_entry.modified_minute != test_modified_minute) {
+    if (dir_entry->modified_minute != test_modified_minute) {
         printf("modified_minute - expected %d, got %d\n", test_modified_minute,
-                dir_entry.modified_minute);
+                dir_entry->modified_minute);
         ret = -1;
     }
 
-    if (dir_entry.modified_second != test_modified_second) {
+    if (dir_entry->modified_second != test_modified_second) {
         printf("modified_second - expected %d, got %d\n", test_modified_second,
-                dir_entry.modified_second);
+                dir_entry->modified_second);
         ret = -1;
     }
 
-    if (dir_entry.modified_millisecond != test_modified_milli) {
+    if (dir_entry->modified_millisecond != test_modified_milli) {
         printf("modified_millisecond - expected %d, got %d\n",
-                test_modified_milli, dir_entry.modified_millisecond);
+                test_modified_milli, dir_entry->modified_millisecond);
         ret = -1;
     }
 
-    if (dir_entry.table_number != test_table) {
+    if (dir_entry->table_number != test_table) {
         printf("table_number - expected %d, got %d\n", test_table,
-                dir_entry.table_number);
+                dir_entry->table_number);
         ret = -1;
     }
 
-    if (dir_entry.first_cluster != test_cluster) {
+    if (dir_entry->first_cluster != test_cluster) {
         printf("first_cluster - expected %d, got %d\n", test_cluster,
-                dir_entry.first_cluster);
+                dir_entry->first_cluster);
         ret = -1;
     }
 
-    if (dir_entry.file_length != test_file_length) {
+    if (dir_entry->file_length != test_file_length) {
         printf("file_length - expected %d, got %d\n", test_file_length,
-                dir_entry.file_length);
+                dir_entry->file_length);
         ret = -1;
     }
 
-    if (dir_entry.filename_entries != test_entries) {
+    if (dir_entry->filename_entries != test_entries) {
         printf("filename_entries - expected %d, got %d\n", test_entries,
-                dir_entry.filename_entries);
+                dir_entry->filename_entries);
         ret = -1;
     }
 
     for (size_t i = 0; i < 11; i++) {
-        if (dir_entry.filename[i] != test_filename[i]) {
+        if (dir_entry->filename[i] != test_filename[i]) {
             printf("filename[%zu] - expected %c, got %c\n", i, test_filename[i],
-                    dir_entry.filename[i]);
+                    dir_entry->filename[i]);
             ret = -1;
         }
     }
