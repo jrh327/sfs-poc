@@ -153,7 +153,13 @@ void get_directory_entries(const struct sfs_filesystem sfs,
             parent->contents = next;
         }
 
-        if (!found_end) {
+        /*
+         * if directory entries all the way to the end, check if current
+         * cluster is not the last one allocated to the directory
+         */
+        if (!found_end
+                && (fat.fat_number != END_CLUSTER_CHAIN
+                && fat.cluster_number != END_CLUSTER_CHAIN)) {
             fat = get_fat_entry(sfs, fat);
             move_to_cluster(sfs, fat);
         }

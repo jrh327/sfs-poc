@@ -10,6 +10,8 @@
 
 #define BOOT_SECTOR_SIZE 512
 
+#define END_CLUSTER_CHAIN 0xffff
+
 /* forward declaration */
 struct directory_list;
 
