@@ -68,8 +68,24 @@ struct directory_entry* read_directory_entry(const struct sfs_filesystem sfs,
     dir_entry->file_length = get_uint32(entry, 16);
     dir_entry->filename_entries = entry[20];
 
+    dir_entry->filename = malloc(sizeof(char)
+            * (dir_entry->filename_entries * (DIR_ENTRY_SIZE - 1) + 11));
+    char* filename = dir_entry->filename;
     for (size_t i = 0; i < 11; i++) {
-        dir_entry->filename[i] = entry[21 + i];
+        *filename = entry[21 + i];
+        filename++;
+    }
+
+    /* TODO: make sure successive reads are in the correct cluster */
+    uint8_t filename_entries = dir_entry->filename_entries;
+    if (filename_entries > 0) {
+        for (size_t i = 0; i < filename_entries; i++) {
+            fread(&entry, sizeof(entry), 1, sfs.fp);
+            for (size_t j = 1; j < DIR_ENTRY_SIZE; j++) {
+                *filename = entry[j];
+                filename++;
+            }
+        }
     }
 
     return (dir_entry);

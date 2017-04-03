@@ -135,6 +135,7 @@ int test_reading_directory_entry() {
     dir_entry->file_length = test_file_length;
     dir_entry->filename_entries = test_entries;
 
+    dir_entry->filename = malloc(sizeof(test_filename));
     for (size_t i = 0; i < 11; i++) {
         dir_entry->filename[i] = test_filename[i];
     }

@@ -90,7 +90,7 @@ struct directory_entry {
     uint16_t first_cluster;
     uint32_t file_length;
     uint8_t filename_entries;
-    uint8_t filename[11];
+    char* filename;
 };
 
 /**
