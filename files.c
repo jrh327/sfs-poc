@@ -68,24 +68,61 @@ struct directory_entry* read_directory_entry(const struct sfs_filesystem sfs,
     dir_entry->file_length = get_uint32(entry, 16);
     dir_entry->filename_entries = entry[20];
 
-    dir_entry->filename = malloc(sizeof(char)
-            * (dir_entry->filename_entries * (DIR_ENTRY_SIZE - 1) + 11));
-    char* filename = dir_entry->filename;
-    for (size_t i = 0; i < 11; i++) {
-        *filename = entry[21 + i];
-        filename++;
-    }
-
-    /* TODO: make sure successive reads are in the correct cluster */
     uint8_t filename_entries = dir_entry->filename_entries;
-    if (filename_entries > 0) {
-        for (size_t i = 0; i < filename_entries; i++) {
-            fread(&entry, sizeof(entry), 1, sfs.fp);
-            for (size_t j = 1; j < DIR_ENTRY_SIZE; j++) {
-                *filename = entry[j];
-                filename++;
+    if (filename_entries == 0) {
+        size_t len;
+        for (len = 0; len < 12; len++) {
+            if (!entry[21 + len]) {
+                break;
             }
         }
+        len++; /* one extra for the \0 termination */
+
+        dir_entry->filename = malloc(sizeof(char) * len);
+        memcpy(dir_entry->filename, (entry + 21), len - 1);
+        dir_entry->filename[len] = 0;
+    } else {
+        uint8_t* extra_entries = malloc(sizeof(char)
+                * (filename_entries * DIR_ENTRY_SIZE));
+        size_t index = 0;
+        size_t len = 0;
+        for (size_t i = 0; i < filename_entries; i++) {
+            /* TODO: make sure successive reads are in the correct cluster */
+            fread((extra_entries + index), sizeof(DIR_ENTRY_SIZE), 1, sfs.fp);
+            index += DIR_ENTRY_SIZE;
+            len += (DIR_ENTRY_SIZE - 1);
+        }
+
+        /* go back to the beginning of the last entry and find the \0 */
+        index -= DIR_ENTRY_SIZE;
+        len -= (DIR_ENTRY_SIZE - 1);
+        printf("%zu\n", len);
+        for (size_t i = 0; i < DIR_ENTRY_SIZE; i++) {
+            if (!*(extra_entries + index + i)) {
+                break;
+            }
+            len++;
+        }
+printf("%zu bytes in extra entries\n", len);
+        /* at this point, index includes the extra byte for \0 termination */
+        dir_entry->filename = malloc(sizeof(char) * (len + 11));
+printf("allocating filename of length %lu\n", (len + 11));
+        char* filename = dir_entry->filename;
+        uint8_t* extra_entry = extra_entries;
+        memcpy(filename, (entry + 21), 11);
+        filename += 11;
+        for (size_t i = 0; i < filename_entries - 1; i++) {
+            memcpy(filename, (extra_entry + 1), DIR_ENTRY_SIZE - 1);
+            filename += (DIR_ENTRY_SIZE - 1);
+            extra_entry += DIR_ENTRY_SIZE;
+            len -= (DIR_ENTRY_SIZE - 1);
+        }
+        memcpy(filename, (extra_entry + 1), len);
+
+        /* just in case the filename extends to the end of the last entry */
+        *(filename + len) = 0;
+
+        free(extra_entries);
     }
 
     return (dir_entry);

@@ -108,7 +108,7 @@ int test_reading_directory_entry() {
     const uint16_t test_table = 1;
     const uint16_t test_cluster = 3;
     const uint32_t test_file_length = 123456;
-    const uint8_t test_entries = 1;
+    const uint8_t test_entries = 0;
     const uint8_t test_filename[11] = {
             'f', 'i', 'l', 'e', 'n', 'a', 'm', 'e', 't', 'x', 't'
     };
@@ -292,6 +292,125 @@ int test_reading_directory_entry() {
     return (ret);
 }
 
+int test_read_dir_entry_short_filename() {
+    FILE* fp = fopen(filename, "wb");
+    if (fp == NULL) {
+        printf("error creating file\n");
+        return (-1);
+    }
+    const uint8_t test_filename[9] = {
+            'f', 'i', 'l', 'e', '.', 't', 'x', 't', '\0'
+    };
+    struct directory_entry* dir_entry = malloc(sizeof(struct directory_entry));
+    dir_entry->filename_entries = 0;
+    dir_entry->filename = malloc(sizeof(test_filename));
+    for (size_t i = 0; i < 11; i++) {
+        dir_entry->filename[i] = test_filename[i];
+    }
+
+    struct sfs_filesystem sfs = { .fp = fp };
+    write_directory_entry(sfs, *dir_entry);
+
+    free(dir_entry);
+    fclose(fp);
+
+    fp = fopen(filename, "rb");
+    if (fp == NULL) {
+        printf("error reading file\n");
+        return (-1);
+    }
+
+    sfs.fp = fp;
+    struct directory_entry empty = { 0 };
+    dir_entry = read_directory_entry(sfs, &empty);
+
+    fclose(fp);
+
+    delete_file();
+
+    int ret = 0;
+    for (size_t i = 0; i < 9; i++) {
+        if (dir_entry->filename[i] != test_filename[i]) {
+            printf("filename[%zu] - expected %c, got %c\n", i, test_filename[i],
+                    dir_entry->filename[i]);
+            ret = -1;
+        }
+    }
+    return ret;
+}
+
+int test_read_dir_entry_long_filename() {
+    FILE* fp = fopen(filename, "wb");
+    if (fp == NULL) {
+        printf("error creating file\n");
+        return (-1);
+    }
+    const uint8_t test_filename[11] = {
+            'f', 'i', 'l', 'e', 'n', 'a', 'm', 'e', 't', 'x', 't'
+    };
+    struct directory_entry* dir_entry = malloc(sizeof(struct directory_entry));
+    dir_entry->filename_entries = 2;
+    dir_entry->filename = malloc(sizeof(test_filename));
+    for (size_t i = 0; i < 11; i++) {
+        dir_entry->filename[i] = test_filename[i];
+    }
+    const uint8_t test_filename_extra[58] = {
+            1, 'f', 'i', 'l', 'e', 'n', 'a', 'm', 'e', 't', 'x', 't',
+            'f', 'i', 'l', 'e', 'n', 'a', 'm', 'e', 't', 'x', 't', 'f',
+            'i', 'l', 'e', 'n', 'a', 'm', 'e', 't',
+            2, 'x', 't', 'f', 'i', 'l', 'e', 'n', 'a', 'm', 'e', 't',
+            'x', 't', 'f', 'i', 'l', 'e', 'n', 'a', 'm', 'e', 't', 'x',
+            't', 0
+    };
+
+    struct sfs_filesystem sfs = { .fp = fp };
+    write_directory_entry(sfs, *dir_entry);
+    fwrite(test_filename_extra, sizeof(test_filename_extra), 1, fp);
+
+    free(dir_entry);
+    fclose(fp);
+
+    fp = fopen(filename, "rb");
+    if (fp == NULL) {
+        printf("error reading file\n");
+        return (-1);
+    }
+
+    sfs.fp = fp;
+    struct directory_entry empty = { 0 };
+    dir_entry = read_directory_entry(sfs, &empty);
+
+    fclose(fp);
+
+    delete_file();
+printf("%s\n", dir_entry->filename);
+    int ret = 0;
+    char* filename = dir_entry->filename;
+    for (size_t i = 0; i < 11; i++) {
+        if (*filename != test_filename[i]) {
+            printf("filename[%zu] - expected %c, got %c\n", i, test_filename[i],
+                    *filename);
+            ret = -1;
+        }
+        filename++;
+    }
+
+    const uint8_t* extra = test_filename_extra;
+    for (size_t i = 0; i < 55; i++) {
+        if (i % 32 == 0) {
+            extra++;
+        }
+        if (*filename != *extra) {
+            printf("filename[%zu] - expected %c, got %c\n", i + 11,
+                    *extra, *filename);
+            ret = -1;
+        }
+        filename++;
+        extra++;
+    }
+    return ret;
+}
+
 int test_new_bootsector_constraints() {
     FILE* fp = fopen(filename, "wb");
     if (fp == NULL) {
@@ -422,4 +541,6 @@ int main() {
     run_test("test_reading_directory_entry", test_reading_directory_entry);
     run_test("test_new_bootsector_constraints",
             test_new_bootsector_constraints);
+    run_test("test_read_dir_entry_long_filename",
+            test_read_dir_entry_long_filename);
 }
