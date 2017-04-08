@@ -88,7 +88,7 @@ struct directory_entry* read_directory_entry(const struct sfs_filesystem sfs,
         size_t len = 0;
         for (size_t i = 0; i < filename_entries; i++) {
             /* TODO: make sure successive reads are in the correct cluster */
-            fread((extra_entries + index), sizeof(DIR_ENTRY_SIZE), 1, sfs.fp);
+            fread((extra_entries + index), DIR_ENTRY_SIZE, 1, sfs.fp);
             index += DIR_ENTRY_SIZE;
             len += (DIR_ENTRY_SIZE - 1);
         }
@@ -96,17 +96,16 @@ struct directory_entry* read_directory_entry(const struct sfs_filesystem sfs,
         /* go back to the beginning of the last entry and find the \0 */
         index -= DIR_ENTRY_SIZE;
         len -= (DIR_ENTRY_SIZE - 1);
-        printf("%zu\n", len);
+
         for (size_t i = 0; i < DIR_ENTRY_SIZE; i++) {
             if (!*(extra_entries + index + i)) {
                 break;
             }
             len++;
         }
-printf("%zu bytes in extra entries\n", len);
+
         /* at this point, index includes the extra byte for \0 termination */
         dir_entry->filename = malloc(sizeof(char) * (len + 11));
-printf("allocating filename of length %lu\n", (len + 11));
         char* filename = dir_entry->filename;
         uint8_t* extra_entry = extra_entries;
         memcpy(filename, (entry + 21), 11);

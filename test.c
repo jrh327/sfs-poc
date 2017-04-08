@@ -367,6 +367,7 @@ int test_read_dir_entry_long_filename() {
     write_directory_entry(sfs, *dir_entry);
     fwrite(test_filename_extra, sizeof(test_filename_extra), 1, fp);
 
+    free(dir_entry->filename);
     free(dir_entry);
     fclose(fp);
 
@@ -383,7 +384,7 @@ int test_read_dir_entry_long_filename() {
     fclose(fp);
 
     delete_file();
-printf("%s\n", dir_entry->filename);
+
     int ret = 0;
     char* filename = dir_entry->filename;
     for (size_t i = 0; i < 11; i++) {
@@ -396,9 +397,11 @@ printf("%s\n", dir_entry->filename);
     }
 
     const uint8_t* extra = test_filename_extra;
-    for (size_t i = 0; i < 55; i++) {
+    size_t len = sizeof(test_filename_extra);
+    for (size_t i = 0; i < len; i++) {
         if (i % 32 == 0) {
-            extra++;
+            extra++; /* skip first byte of each entry */
+            i++;
         }
         if (*filename != *extra) {
             printf("filename[%zu] - expected %c, got %c\n", i + 11,
