@@ -141,8 +141,9 @@ int test_reading_directory_entry() {
     }
 
     struct sfs_filesystem sfs = { .fp = fp };
-    write_directory_entry(sfs, *dir_entry);
+    write_directory_entry(sfs, dir_entry);
 
+    free(dir_entry->filename);
     free(dir_entry);
     fclose(fp);
 
@@ -309,8 +310,9 @@ int test_read_dir_entry_short_filename() {
     }
 
     struct sfs_filesystem sfs = { .fp = fp };
-    write_directory_entry(sfs, *dir_entry);
+    write_directory_entry(sfs, dir_entry);
 
+    free(dir_entry->filename);
     free(dir_entry);
     fclose(fp);
 
@@ -345,16 +347,8 @@ int test_read_dir_entry_long_filename() {
         printf("error creating file\n");
         return (-1);
     }
-    const uint8_t test_filename[11] = {
-            'f', 'i', 'l', 'e', 'n', 'a', 'm', 'e', 't', 'x', 't'
-    };
-    struct directory_entry* dir_entry = malloc(sizeof(struct directory_entry));
-    dir_entry->filename_entries = 2;
-    dir_entry->filename = malloc(sizeof(test_filename));
-    for (size_t i = 0; i < 11; i++) {
-        dir_entry->filename[i] = test_filename[i];
-    }
-    const uint8_t test_filename_extra[58] = {
+    const uint8_t test_filename[69] = {
+            'f', 'i', 'l', 'e', 'n', 'a', 'm', 'e', 't', 'x', 't',
             1, 'f', 'i', 'l', 'e', 'n', 'a', 'm', 'e', 't', 'x', 't',
             'f', 'i', 'l', 'e', 'n', 'a', 'm', 'e', 't', 'x', 't', 'f',
             'i', 'l', 'e', 'n', 'a', 'm', 'e', 't',
@@ -362,10 +356,15 @@ int test_read_dir_entry_long_filename() {
             'x', 't', 'f', 'i', 'l', 'e', 'n', 'a', 'm', 'e', 't', 'x',
             't', 0
     };
+    struct directory_entry* dir_entry = malloc(sizeof(struct directory_entry));
+    dir_entry->filename_entries = 2;
+    dir_entry->filename = malloc(sizeof(test_filename));
+    for (size_t i = 0; i < 11; i++) {
+        dir_entry->filename[i] = test_filename[i];
+    }
 
     struct sfs_filesystem sfs = { .fp = fp };
-    write_directory_entry(sfs, *dir_entry);
-    fwrite(test_filename_extra, sizeof(test_filename_extra), 1, fp);
+    write_directory_entry(sfs, dir_entry);
 
     free(dir_entry->filename);
     free(dir_entry);
@@ -381,35 +380,34 @@ int test_read_dir_entry_long_filename() {
     struct directory_entry empty = { 0 };
     dir_entry = read_directory_entry(sfs, &empty);
 
+    int ret = 0;
+
+    /* make sure reserved bytes are set correctly */
+    fseek(fp, 0, SEEK_SET);
+    for (size_t i = 0; i < 3; i++) {
+        uint8_t entry[DIR_ENTRY_SIZE] = { 0 };
+        fread(&entry, DIR_ENTRY_SIZE, 1, fp);
+        if (entry[0] != i) {
+            printf("entry %zu - expected reserved byte to be %zu, got %d\n",
+                    i, i, entry[0]);
+            ret = -1;
+        }
+    }
     fclose(fp);
 
     delete_file();
 
-    int ret = 0;
     char* filename = dir_entry->filename;
     for (size_t i = 0; i < 11; i++) {
+        if ((i + 11) % 32 == 0) {
+            i++; /* skip first byte of each entry */
+        }
         if (*filename != test_filename[i]) {
             printf("filename[%zu] - expected %c, got %c\n", i, test_filename[i],
                     *filename);
             ret = -1;
         }
         filename++;
-    }
-
-    const uint8_t* extra = test_filename_extra;
-    size_t len = sizeof(test_filename_extra);
-    for (size_t i = 0; i < len; i++) {
-        if (i % 32 == 0) {
-            extra++; /* skip first byte of each entry */
-            i++;
-        }
-        if (*filename != *extra) {
-            printf("filename[%zu] - expected %c, got %c\n", i + 11,
-                    *extra, *filename);
-            ret = -1;
-        }
-        filename++;
-        extra++;
     }
     return ret;
 }
@@ -544,6 +542,8 @@ int main() {
     run_test("test_reading_directory_entry", test_reading_directory_entry);
     run_test("test_new_bootsector_constraints",
             test_new_bootsector_constraints);
+    run_test("test_read_dir_entry_short_filename",
+            test_read_dir_entry_short_filename);
     run_test("test_read_dir_entry_long_filename",
             test_read_dir_entry_long_filename);
 }

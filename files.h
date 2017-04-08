@@ -21,7 +21,7 @@ struct directory_entry* read_directory_entry(const struct sfs_filesystem sfs,
  * @param dir_entry the directory entry to write
  */
 void write_directory_entry(const struct sfs_filesystem sfs,
-        struct directory_entry dir_entry);
+        struct directory_entry* dir_entry);
 
 /**
  * Retrieve the directory entry for the root directory of the filesystem.

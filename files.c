@@ -82,8 +82,8 @@ struct directory_entry* read_directory_entry(const struct sfs_filesystem sfs,
         memcpy(dir_entry->filename, (entry + 21), len - 1);
         dir_entry->filename[len] = 0;
     } else {
-        uint8_t* extra_entries = malloc(sizeof(char)
-                * (filename_entries * DIR_ENTRY_SIZE));
+        uint8_t* extra_entries = malloc(
+                sizeof(char) * (filename_entries * DIR_ENTRY_SIZE));
         size_t index = 0;
         size_t len = 0;
         for (size_t i = 0; i < filename_entries; i++) {
@@ -128,41 +128,59 @@ struct directory_entry* read_directory_entry(const struct sfs_filesystem sfs,
 }
 
 void write_directory_entry(const struct sfs_filesystem sfs,
-        struct directory_entry dir_entry) {
+        struct directory_entry* dir_entry) {
     uint8_t entry[DIR_ENTRY_SIZE] = { 0 };
 
-    entry[0] = dir_entry.reserved;
-    entry[1] = dir_entry.attributes;
+    entry[0] = dir_entry->reserved;
+    entry[1] = dir_entry->attributes;
 
-    entry[2] = (dir_entry.created_month << 4) | (dir_entry.created_day >> 1);
-    entry[3] = (dir_entry.created_day << 7) | (dir_entry.created_year);
-    entry[4] = (dir_entry.created_hour << 3) | (dir_entry.created_minute >> 3);
-    entry[5] = (dir_entry.created_minute << 5)
-            | (dir_entry.created_second >> 1);
-    entry[6] = (dir_entry.created_second << 7)
-            | (dir_entry.created_millisecond);
+    entry[2] = (dir_entry->created_month << 4) | (dir_entry->created_day >> 1);
+    entry[3] = (dir_entry->created_day << 7) | (dir_entry->created_year);
+    entry[4] = (dir_entry->created_hour << 3)
+            | (dir_entry->created_minute >> 3);
+    entry[5] = (dir_entry->created_minute << 5)
+            | (dir_entry->created_second >> 1);
+    entry[6] = (dir_entry->created_second << 7)
+            | (dir_entry->created_millisecond);
 
-    entry[7] = (dir_entry.modified_month << 4) | (dir_entry.modified_day >> 1);
-    entry[8] = (dir_entry.modified_day << 7) | (dir_entry.modified_year);
-    entry[9] = (dir_entry.modified_hour << 3)
-            | (dir_entry.modified_minute >> 3);
-    entry[10] = (dir_entry.modified_minute << 5)
-            | (dir_entry.modified_second >> 1);
-    entry[11] = (dir_entry.modified_second << 7)
-            | (dir_entry.modified_millisecond);
+    entry[7] = (dir_entry->modified_month << 4)
+            | (dir_entry->modified_day >> 1);
+    entry[8] = (dir_entry->modified_day << 7) | (dir_entry->modified_year);
+    entry[9] = (dir_entry->modified_hour << 3)
+            | (dir_entry->modified_minute >> 3);
+    entry[10] = (dir_entry->modified_minute << 5)
+            | (dir_entry->modified_second >> 1);
+    entry[11] = (dir_entry->modified_second << 7)
+            | (dir_entry->modified_millisecond);
 
-    put_uint16(entry, dir_entry.table_number, 12);
-    put_uint16(entry, dir_entry.first_cluster, 14);
-    put_uint32(entry, dir_entry.file_length, 16);
+    put_uint16(entry, dir_entry->table_number, 12);
+    put_uint16(entry, dir_entry->first_cluster, 14);
+    put_uint32(entry, dir_entry->file_length, 16);
 
-    entry[20] = dir_entry.filename_entries;
+    entry[20] = dir_entry->filename_entries;
 
-    /* TODO: handle filenames longer than 11 bytes */
     for (size_t i = 0; i < 11; i++) {
-        entry[21 + i] = dir_entry.filename[i];
+        entry[21 + i] = dir_entry->filename[i];
     }
+    fwrite(&entry, DIR_ENTRY_SIZE, 1, sfs.fp);
 
-    fwrite(&entry, sizeof(entry), 1, sfs.fp);
+    for (size_t extra = 0; extra < dir_entry->filename_entries; extra++) {
+        entry[0] = extra + 1; /* set the reserved byte to the entry number */
+        size_t index_end = 0; /* not used until the final entry */
+        for (size_t i = 1; i < DIR_ENTRY_SIZE; i++) {
+            entry[i] = dir_entry->filename[i + 11];
+            if (!entry[i]) {
+                /* found the end of the string, break out of loop */
+                index_end = i;
+                break;
+            }
+        }
+        /* only happens on the last entry, zero out the rest of the entry */
+        for (size_t i = index_end; i < DIR_ENTRY_SIZE; i++) {
+            entry[i] = 0;
+        }
+        fwrite(&entry, DIR_ENTRY_SIZE, 1, sfs.fp);
+    }
 }
 
 struct directory_entry* get_root_directory_entry(
@@ -191,7 +209,8 @@ void get_directory_entries(const struct sfs_filesystem sfs,
             * sfs.sectors_per_cluster) / DIR_ENTRY_SIZE;
     while (!found_end) {
         for (size_t i = 0; i < dir_entries_per_cluster; i++) {
-            struct directory_entry* dir_entry = read_directory_entry(sfs, parent);
+            struct directory_entry* dir_entry = read_directory_entry(sfs,
+                    parent);
             /* entry is guaranteed to be empty if parent is NULL */
             if (dir_entry->parent == NULL) {
                 found_end = 1;
