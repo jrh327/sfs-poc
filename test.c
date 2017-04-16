@@ -1,9 +1,10 @@
 #include "sfs.h"
+#include "files.h"
 #include "util.h"
 
 const char* filename = "test.bin";
 
-void delete_file() {
+void delete_tmp_file() {
     int err = remove(filename);
     if (err != 0) {
         printf("Could not delete file\n");
@@ -41,7 +42,7 @@ int test_writing_uint16() {
     }
     fclose(fp);
 
-    delete_file();
+    delete_tmp_file();
 
     return (ret);
 }
@@ -74,7 +75,7 @@ int test_reading_uint16() {
     }
     fclose(fp);
 
-    delete_file();
+    delete_tmp_file();
 
     return (ret);
 }
@@ -141,7 +142,7 @@ int test_reading_directory_entry() {
     }
 
     struct sfs_filesystem sfs = { .fp = fp };
-    write_directory_entry(sfs, dir_entry);
+    write_directory_entry(&sfs, dir_entry);
 
     free(dir_entry->filename);
     free(dir_entry);
@@ -155,11 +156,11 @@ int test_reading_directory_entry() {
 
     sfs.fp = fp;
     struct directory_entry empty = { 0 };
-    dir_entry = read_directory_entry(sfs, &empty);
+    dir_entry = read_directory_entry(&sfs, &empty);
 
     fclose(fp);
 
-    delete_file();
+    delete_tmp_file();
 
     int ret = 0;
     if (dir_entry->reserved != test_reserved) {
@@ -310,7 +311,7 @@ int test_read_dir_entry_short_filename() {
     }
 
     struct sfs_filesystem sfs = { .fp = fp };
-    write_directory_entry(sfs, dir_entry);
+    write_directory_entry(&sfs, dir_entry);
 
     free(dir_entry->filename);
     free(dir_entry);
@@ -324,11 +325,11 @@ int test_read_dir_entry_short_filename() {
 
     sfs.fp = fp;
     struct directory_entry empty = { 0 };
-    dir_entry = read_directory_entry(sfs, &empty);
+    dir_entry = read_directory_entry(&sfs, &empty);
 
     fclose(fp);
 
-    delete_file();
+    delete_tmp_file();
 
     int ret = 0;
     for (size_t i = 0; i < 9; i++) {
@@ -364,7 +365,7 @@ int test_read_dir_entry_long_filename() {
     }
 
     struct sfs_filesystem sfs = { .fp = fp };
-    write_directory_entry(sfs, dir_entry);
+    write_directory_entry(&sfs, dir_entry);
 
     free(dir_entry->filename);
     free(dir_entry);
@@ -378,7 +379,7 @@ int test_read_dir_entry_long_filename() {
 
     sfs.fp = fp;
     struct directory_entry empty = { 0 };
-    dir_entry = read_directory_entry(sfs, &empty);
+    dir_entry = read_directory_entry(&sfs, &empty);
 
     int ret = 0;
 
@@ -395,7 +396,7 @@ int test_read_dir_entry_long_filename() {
     }
     fclose(fp);
 
-    delete_file();
+    delete_tmp_file();
 
     char* filename = dir_entry->filename;
     for (size_t i = 0; i < 11; i++) {
@@ -425,30 +426,30 @@ int test_new_bootsector_constraints() {
     uint16_t expected_fat_size = FAT_SIZE_MEDIUM;
     uint16_t expected_bytes_per_sector = 512;
     uint8_t expected_sectors_per_cluster = 64;
-    struct sfs_filesystem sfs = initialize_filesystem_partition(fp, 0,
+    struct sfs_filesystem* sfs = initialize_filesystem_partition(fp, 0,
             init_fat_size, init_bytes_per_sector, init_sectors_per_cluster);
     int ret = 0;
-    if (sfs.entries_per_fat != expected_fat_size) {
+    if (sfs->entries_per_fat != expected_fat_size) {
         printf("entries_per_fat 1 - expected %d, got %d\n", expected_fat_size,
-                sfs.entries_per_fat);
+                sfs->entries_per_fat);
         ret = -1;
     }
 
-    if (sfs.bytes_per_sector != expected_bytes_per_sector) {
+    if (sfs->bytes_per_sector != expected_bytes_per_sector) {
         printf("bytes_per_sector 1 - expected %d, got %d\n",
-                expected_bytes_per_sector, sfs.bytes_per_sector);
+                expected_bytes_per_sector, sfs->bytes_per_sector);
         ret = -1;
     }
 
-    if (sfs.sectors_per_cluster != expected_sectors_per_cluster) {
+    if (sfs->sectors_per_cluster != expected_sectors_per_cluster) {
         printf("sectors_per_cluster 1 - expected %d, got %d\n",
-                expected_sectors_per_cluster, sfs.sectors_per_cluster);
+                expected_sectors_per_cluster, sfs->sectors_per_cluster);
         ret = -1;
     }
 
     fclose(fp);
 
-    delete_file();
+    delete_tmp_file();
 
     fp = fopen(filename, "wb");
     if (fp == NULL) {
@@ -464,27 +465,27 @@ int test_new_bootsector_constraints() {
     expected_sectors_per_cluster = 64; /* 32K byte max cluster size */
     sfs = initialize_filesystem_partition(fp, 0, init_fat_size,
             init_bytes_per_sector, init_sectors_per_cluster);
-    if (sfs.entries_per_fat != expected_fat_size) {
+    if (sfs->entries_per_fat != expected_fat_size) {
         printf("entries_per_fat 2 - expected %d, got %d\n", expected_fat_size,
-                sfs.entries_per_fat);
+                sfs->entries_per_fat);
         ret = -1;
     }
 
-    if (sfs.bytes_per_sector != expected_bytes_per_sector) {
+    if (sfs->bytes_per_sector != expected_bytes_per_sector) {
         printf("bytes_per_sector 2 - expected %d, got %d\n",
-                expected_bytes_per_sector, sfs.bytes_per_sector);
+                expected_bytes_per_sector, sfs->bytes_per_sector);
         ret = -1;
     }
 
-    if (sfs.sectors_per_cluster != expected_sectors_per_cluster) {
+    if (sfs->sectors_per_cluster != expected_sectors_per_cluster) {
         printf("sectors_per_cluster 2 - expected %d, got %d\n",
-                expected_sectors_per_cluster, sfs.sectors_per_cluster);
+                expected_sectors_per_cluster, sfs->sectors_per_cluster);
         ret = -1;
     }
 
     fclose(fp);
 
-    delete_file();
+    delete_tmp_file();
 
     fp = fopen(filename, "wb");
     if (fp == NULL) {
@@ -500,27 +501,27 @@ int test_new_bootsector_constraints() {
     expected_sectors_per_cluster = 16; /* uses MSB if not power of 2 */
     sfs = initialize_filesystem_partition(fp, 0, init_fat_size,
             init_bytes_per_sector, init_sectors_per_cluster);
-    if (sfs.entries_per_fat != expected_fat_size) {
+    if (sfs->entries_per_fat != expected_fat_size) {
         printf("entries_per_fat 3 - expected %d, got %d\n", expected_fat_size,
-                sfs.entries_per_fat);
+                sfs->entries_per_fat);
         ret = -1;
     }
 
-    if (sfs.bytes_per_sector != expected_bytes_per_sector) {
+    if (sfs->bytes_per_sector != expected_bytes_per_sector) {
         printf("bytes_per_sector 3 - expected %d, got %d\n",
-                expected_bytes_per_sector, sfs.bytes_per_sector);
+                expected_bytes_per_sector, sfs->bytes_per_sector);
         ret = -1;
     }
 
-    if (sfs.sectors_per_cluster != expected_sectors_per_cluster) {
+    if (sfs->sectors_per_cluster != expected_sectors_per_cluster) {
         printf("sectors_per_cluster 3 - expected %d, got %d\n",
-                expected_sectors_per_cluster, sfs.sectors_per_cluster);
+                expected_sectors_per_cluster, sfs->sectors_per_cluster);
         ret = -1;
     }
 
     fclose(fp);
 
-    delete_file();
+    delete_tmp_file();
 
     return (ret);
 }

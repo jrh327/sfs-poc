@@ -1,13 +1,13 @@
 #include "files.h"
 
-void move_to_fat(struct sfs_filesystem sfs, uint16_t fat_number);
-void move_to_cluster(const struct sfs_filesystem sfs,
+void move_to_fat(const struct sfs_filesystem* sfs, uint16_t fat_number);
+void move_to_cluster(const struct sfs_filesystem* sfs,
         const struct fat_entry entry);
 
-struct directory_entry* read_directory_entry(const struct sfs_filesystem sfs,
+struct directory_entry* read_directory_entry(const struct sfs_filesystem* sfs,
         struct directory_entry* parent) {
     uint8_t entry[DIR_ENTRY_SIZE] = { 0 };
-    fread(&entry, sizeof(entry), 1, sfs.fp);
+    fread(&entry, sizeof(entry), 1, sfs->fp);
 
     int empty_entry = 1;
     for (size_t i = 0; i < DIR_ENTRY_SIZE; i++) {
@@ -88,7 +88,7 @@ struct directory_entry* read_directory_entry(const struct sfs_filesystem sfs,
         size_t len = 0;
         for (size_t i = 0; i < filename_entries; i++) {
             /* TODO: make sure successive reads are in the correct cluster */
-            fread((extra_entries + index), DIR_ENTRY_SIZE, 1, sfs.fp);
+            fread((extra_entries + index), DIR_ENTRY_SIZE, 1, sfs->fp);
             index += DIR_ENTRY_SIZE;
             len += (DIR_ENTRY_SIZE - 1);
         }
@@ -127,7 +127,7 @@ struct directory_entry* read_directory_entry(const struct sfs_filesystem sfs,
     return (dir_entry);
 }
 
-void write_directory_entry(const struct sfs_filesystem sfs,
+void write_directory_entry(const struct sfs_filesystem* sfs,
         struct directory_entry* dir_entry) {
     uint8_t entry[DIR_ENTRY_SIZE] = { 0 };
 
@@ -162,7 +162,7 @@ void write_directory_entry(const struct sfs_filesystem sfs,
     for (size_t i = 0; i < 11; i++) {
         entry[21 + i] = dir_entry->filename[i];
     }
-    fwrite(&entry, DIR_ENTRY_SIZE, 1, sfs.fp);
+    fwrite(&entry, DIR_ENTRY_SIZE, 1, sfs->fp);
 
     for (size_t extra = 0; extra < dir_entry->filename_entries; extra++) {
         entry[0] = extra + 1; /* set the reserved byte to the entry number */
@@ -179,12 +179,12 @@ void write_directory_entry(const struct sfs_filesystem sfs,
         for (size_t i = index_end; i < DIR_ENTRY_SIZE; i++) {
             entry[i] = 0;
         }
-        fwrite(&entry, DIR_ENTRY_SIZE, 1, sfs.fp);
+        fwrite(&entry, DIR_ENTRY_SIZE, 1, sfs->fp);
     }
 }
 
 struct directory_entry* get_root_directory_entry(
-        const struct sfs_filesystem sfs) {
+        const struct sfs_filesystem* sfs) {
     struct directory_entry* root = malloc(sizeof(struct directory_entry));
 
     root->parent = root; /* set root as its own parent */
@@ -195,7 +195,7 @@ struct directory_entry* get_root_directory_entry(
     return (root);
 }
 
-void get_directory_entries(const struct sfs_filesystem sfs,
+struct directory_entry* get_directory_entries(const struct sfs_filesystem* sfs,
         struct directory_entry* parent) {
     struct fat_entry fat = {
             .fat_number = parent->table_number,
@@ -205,8 +205,8 @@ void get_directory_entries(const struct sfs_filesystem sfs,
     move_to_cluster(sfs, fat);
 
     uint8_t found_end = 0;
-    size_t dir_entries_per_cluster = (sfs.bytes_per_sector
-            * sfs.sectors_per_cluster) / DIR_ENTRY_SIZE;
+    size_t dir_entries_per_cluster = (sfs->bytes_per_sector
+            * sfs->sectors_per_cluster) / DIR_ENTRY_SIZE;
     while (!found_end) {
         for (size_t i = 0; i < dir_entries_per_cluster; i++) {
             struct directory_entry* dir_entry = read_directory_entry(sfs,
@@ -235,10 +235,12 @@ void get_directory_entries(const struct sfs_filesystem sfs,
             move_to_cluster(sfs, fat);
         }
     }
+
+    return (NULL);
 }
 
-void move_to_fat(struct sfs_filesystem sfs, uint16_t fat_number) {
-    FILE* fp = sfs.fp;
+void move_to_fat(const struct sfs_filesystem* sfs, uint16_t fat_number) {
+    FILE* fp = sfs->fp;
 
     /* move to the beginning of the first FAT */
     fseek(fp, BOOT_SECTOR_SIZE, SEEK_SET);
@@ -251,8 +253,8 @@ void move_to_fat(struct sfs_filesystem sfs, uint16_t fat_number) {
      * loop until the correct FAT is found. FAT number is zero-based,
      * if fat_number == 0, already at correct FAT and this is skipped
      */
-    uint16_t fat_size = sfs.entries_per_fat * FAT_ENTRY_SIZE;
-    uint32_t data_block_size = sfs.bytes_per_sector * sfs.sectors_per_cluster;
+    uint16_t fat_size = sfs->entries_per_fat * FAT_ENTRY_SIZE;
+    uint32_t data_block_size = sfs->bytes_per_sector * sfs->sectors_per_cluster;
     while (fat_number) {
         /* move to the end of the current FAT */
         fseek(fp, fat_size, SEEK_CUR);
@@ -264,11 +266,11 @@ void move_to_fat(struct sfs_filesystem sfs, uint16_t fat_number) {
     }
 }
 
-struct fat_entry get_fat_entry(const struct sfs_filesystem sfs,
+struct fat_entry get_fat_entry(const struct sfs_filesystem* sfs,
         const struct fat_entry entry) {
     move_to_fat(sfs, entry.fat_number);
 
-    FILE* fp = sfs.fp;
+    FILE* fp = sfs->fp;
     fseek(fp, entry.cluster_number * FAT_ENTRY_SIZE, SEEK_CUR);
 
     uint16_t entry_fat_number = read_uint16(fp);
@@ -281,26 +283,26 @@ struct fat_entry get_fat_entry(const struct sfs_filesystem sfs,
     return (new_entry);
 }
 
-void put_fat_entry(const struct sfs_filesystem sfs,
+void put_fat_entry(const struct sfs_filesystem* sfs,
         const struct fat_entry location, const struct fat_entry entry) {
     move_to_fat(sfs, entry.fat_number);
 
-    FILE* fp = sfs.fp;
+    FILE* fp = sfs->fp;
     fseek(fp, entry.cluster_number * FAT_ENTRY_SIZE, SEEK_CUR);
 
     write_uint16(fp, entry.fat_number);
     write_uint16(fp, entry.cluster_number);
 }
 
-void move_to_cluster(const struct sfs_filesystem sfs,
+void move_to_cluster(const struct sfs_filesystem* sfs,
         const struct fat_entry entry) {
     /* move to the FAT before the cluster's data block */
     move_to_fat(sfs, entry.cluster_number);
 
-    FILE* fp = sfs.fp;
+    FILE* fp = sfs->fp;
 
     /* move to the end of the current FAT */
-    fseek(fp, sfs.entries_per_fat * FAT_ENTRY_SIZE, SEEK_CUR);
+    fseek(fp, sfs->entries_per_fat * FAT_ENTRY_SIZE, SEEK_CUR);
 
     if (entry.cluster_number == 0) {
         return;
@@ -310,7 +312,7 @@ void move_to_cluster(const struct sfs_filesystem sfs,
      * loop until the correct cluster is found. cluster number is zero-based,
      * if cluster_number == 0, already at correct cluster and this is skipped
      */
-    uint32_t cluster_size = sfs.bytes_per_sector * sfs.sectors_per_cluster;
+    uint32_t cluster_size = sfs->bytes_per_sector * sfs->sectors_per_cluster;
     uint16_t cluster_number = entry.cluster_number;
     while (cluster_number) {
         /* move to the end of the current cluster */
@@ -320,22 +322,22 @@ void move_to_cluster(const struct sfs_filesystem sfs,
     }
 }
 
-uint8_t* read_file_cluster(const struct sfs_filesystem sfs,
+uint8_t* read_file_cluster(const struct sfs_filesystem* sfs,
         const struct fat_entry entry) {
     move_to_cluster(sfs, entry);
 
-    uint32_t cluster_size = sfs.bytes_per_sector * sfs.sectors_per_cluster;
+    uint32_t cluster_size = sfs->bytes_per_sector * sfs->sectors_per_cluster;
     uint8_t* cluster = malloc(cluster_size);
 
-    fread(cluster, cluster_size, 1, sfs.fp);
+    fread(cluster, cluster_size, 1, sfs->fp);
     return (cluster);
 }
 
-void write_file_cluster(const struct sfs_filesystem sfs,
+void write_file_cluster(const struct sfs_filesystem* sfs,
         const struct fat_entry entry, uint8_t* cluster) {
     move_to_cluster(sfs, entry);
 
-    uint32_t cluster_size = sfs.bytes_per_sector * sfs.sectors_per_cluster;
+    uint32_t cluster_size = sfs->bytes_per_sector * sfs->sectors_per_cluster;
 
-    fwrite(cluster, cluster_size, 1, sfs.fp);
+    fwrite(cluster, cluster_size, 1, sfs->fp);
 }
