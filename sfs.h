@@ -110,7 +110,17 @@ int update_file(const struct sfs_filesystem* sfs,
  * @return 0 if successful, or an error code
  */
 int delete_file(const struct sfs_filesystem* sfs,
-        const struct directory_entry* file);
+        struct directory_entry* file);
+
+/**
+ * Restore a deleted file.
+ *
+ * @param sfs the filesystem to undelete from
+ * @param file the file to undelete
+ * @return 0 if successful, or an error code
+ */
+int undelete_file(const struct sfs_filesystem* sfs,
+        struct directory_entry* file);
 
 /**
  * Delete a file and remove all traces of it from the filesystem.

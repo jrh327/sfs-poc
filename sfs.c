@@ -127,7 +127,12 @@ int update_file(const struct sfs_filesystem* sfs,
 }
 
 int delete_file(const struct sfs_filesystem* sfs,
-        const struct directory_entry* file) {
+        struct directory_entry* file) {
+    return (0);
+}
+
+int undelete_file(const struct sfs_filesystem* sfs,
+        struct directory_entry* file) {
     return (0);
 }
 
