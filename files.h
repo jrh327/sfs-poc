@@ -34,16 +34,17 @@ struct directory_entry* get_root_directory_entry(const struct sfs_filesystem* sf
 /**
  * Retrieve the directory entries within the given directory.
  *
+ * The list of directory entries is stored in dir's contents attribute.
+ *
  * @param sfs the filesystem to read from
  * @param parent the directory to scan for entries
- * @return a list containing the contents of the directory
  */
-struct directory_entry* get_directory_entries(const struct sfs_filesystem* sfs,
+int get_directory_entries(const struct sfs_filesystem* sfs,
         struct directory_entry* parent);
 
 /**
  * Get an entry from a file allocation table.
- * 
+ *
  * @param sfs the filesystem to read from
  * @param entry the location of the entry to retrieve
  * @return the value in the entry

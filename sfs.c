@@ -104,11 +104,12 @@ int close_filesystem(struct sfs_filesystem* sfs) {
 }
 
 struct directory_entry* get_root_directory(const struct sfs_filesystem* sfs) {
-    return (NULL);
+    return (get_root_directory_entry(sfs));
 }
 
-struct directory_entry* list_directory(const struct directory_entry* dir) {
-    return (NULL);
+int list_directory(const struct sfs_filesystem* sfs,
+        struct directory_entry* dir) {
+    return (get_directory_entries(sfs, dir));
 }
 
 struct directory_entry* create_file(const struct sfs_filesystem* sfs,

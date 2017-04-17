@@ -60,11 +60,14 @@ struct directory_entry* get_root_directory(const struct sfs_filesystem*);
 /**
  * Retrieve the directory entries within the given directory.
  *
+ * The list of directory entries is stored in dir's contents attribute.
+ *
  * @param sfs the filesystem to read from
- * @param parent the directory to scan for entries
- * @return a list containing the contents of the directory
+ * @param dir the directory to scan for entries
+ * @return 0 if successful, or an error code
  */
-struct directory_entry* list_directory(const struct directory_entry* dir);
+int list_directory(const struct sfs_filesystem* sfs,
+        struct directory_entry* dir);
 
 /**
  * Create a new file with the given contents in the given directory.

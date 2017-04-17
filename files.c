@@ -195,7 +195,7 @@ struct directory_entry* get_root_directory_entry(
     return (root);
 }
 
-struct directory_entry* get_directory_entries(const struct sfs_filesystem* sfs,
+int get_directory_entries(const struct sfs_filesystem* sfs,
         struct directory_entry* parent) {
     struct fat_entry fat = {
             .fat_number = parent->table_number,
@@ -211,6 +211,10 @@ struct directory_entry* get_directory_entries(const struct sfs_filesystem* sfs,
         for (size_t i = 0; i < dir_entries_per_cluster; i++) {
             struct directory_entry* dir_entry = read_directory_entry(sfs,
                     parent);
+            if (!dir_entry) {
+                return (-1);
+            }
+
             /* entry is guaranteed to be empty if parent is NULL */
             if (dir_entry->parent == NULL) {
                 found_end = 1;
@@ -219,6 +223,10 @@ struct directory_entry* get_directory_entries(const struct sfs_filesystem* sfs,
             }
 
             struct directory_list* next = malloc(sizeof(struct directory_list));
+            if (!next) {
+                return (-1);
+            }
+
             next->entry = dir_entry;
             next->next = parent->contents;
             parent->contents = next;
@@ -236,7 +244,7 @@ struct directory_entry* get_directory_entries(const struct sfs_filesystem* sfs,
         }
     }
 
-    return (NULL);
+    return (0);
 }
 
 void move_to_fat(const struct sfs_filesystem* sfs, uint16_t fat_number) {
