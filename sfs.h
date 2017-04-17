@@ -74,11 +74,14 @@ int list_directory(const struct sfs_filesystem* sfs,
  *
  * @param sfs the filesystem to write to
  * @param parent the directory to create the file in
+ * @param filename the name of the new file
  * @param data the contents of the file
+ * @param file_length the number of bytes in the file
  * @return the directory entry of the newly created file
  */
 struct directory_entry* create_file(const struct sfs_filesystem* sfs,
-        const struct directory_entry* parent, const uint8_t* data);
+        struct directory_entry* parent, const char* filename,
+        const uint8_t* data, const uint64_t file_length);
 
 /**
  * Read the contents of a file.
