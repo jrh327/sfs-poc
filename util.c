@@ -136,7 +136,6 @@ void put_uint32(uint8_t arr[], uint32_t value, size_t pos) {
 }
 
 void put_uint64(uint8_t arr[], uint64_t value, size_t pos) {
-    //value = convert_uint64(value);
     arr[pos] = (value >> 56) & 0xff;
     arr[pos + 1] = (value >> 48) & 0xff;
     arr[pos + 2] = (value >> 40) & 0xff;
