@@ -1,6 +1,8 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
+#include "includes.h"
+
 #define FAT_ENTRY_SIZE 4
 #define DIR_ENTRY_SIZE 32
 
@@ -12,8 +14,20 @@
 
 #define END_CLUSTER_CHAIN 0xffff
 
-/* forward declaration */
+/* forward declarations */
+struct sfs_filesystem;
+struct fat_entry;
+struct fat_list;
+struct directory_entry;
 struct directory_list;
+
+/**
+ * Structure containing information stored in a allocation table entry.
+ */
+struct fat_entry {
+    uint16_t fat_number;
+    uint16_t cluster_number;
+};
 
 /**
  * Structure containing information stored in the boot sector of the
@@ -25,14 +39,15 @@ struct sfs_filesystem {
     uint16_t entries_per_fat;
     uint16_t bytes_per_sector;
     uint8_t sectors_per_cluster;
+    struct fat_entry first_available_fat_entry;
 };
 
 /**
- * Structure containing information stored in a allocation table entry.
+ * Linked list of FAT entries.
  */
-struct fat_entry {
-    uint16_t fat_number;
-    uint16_t cluster_number;
+struct fat_list {
+    struct fat_entry* entry;
+    struct fat_list* next;
 };
 
 /**
@@ -100,5 +115,11 @@ struct directory_list {
     struct directory_entry* entry;
     struct directory_list* next;
 };
+
+void free_sfs(struct sfs_filesystem* sfs);
+void free_fat_entry(struct fat_entry* entry);
+void free_fat_list(struct fat_list* list);
+void free_directory_entry(struct directory_entry* entry);
+void free_directory_list(struct directory_list* list);
 
 #endif /* STRUCTS_H */

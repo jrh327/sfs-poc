@@ -104,7 +104,7 @@ uint16_t get_uint16(uint8_t arr[], size_t pos) {
     for (size_t i = 0; i < 2; i++) {
         value = (value << 8) | arr[pos + i];
     }
-    return (convert_uint16(value));
+    return (value);
 }
 
 uint32_t get_uint32(uint8_t arr[], size_t pos) {
@@ -112,7 +112,7 @@ uint32_t get_uint32(uint8_t arr[], size_t pos) {
     for (size_t i = 0; i < 4; i++) {
         value = (value << 8) | arr[pos + i];
     }
-    return (convert_uint32(value));
+    return (value);
 }
 
 uint64_t get_uint64(uint8_t arr[], size_t pos) {
@@ -120,17 +120,15 @@ uint64_t get_uint64(uint8_t arr[], size_t pos) {
     for (size_t i = 0; i < 8; i++) {
         value = (value << 8) | arr[pos + i];
     }
-    return (convert_uint64(value));
+    return (value);
 }
 
 void put_uint16(uint8_t arr[], uint16_t value, size_t pos) {
-    value = convert_uint16(value);
     arr[pos] = (value >> 8) & 0xff;
     arr[pos + 1] = (value & 0xff);
 }
 
 void put_uint32(uint8_t arr[], uint32_t value, size_t pos) {
-    value = convert_uint32(value);
     arr[pos] = (value >> 24) & 0xff;
     arr[pos + 1] = (value >> 16) & 0xff;
     arr[pos + 2] = (value >> 8) & 0xff;
@@ -138,7 +136,7 @@ void put_uint32(uint8_t arr[], uint32_t value, size_t pos) {
 }
 
 void put_uint64(uint8_t arr[], uint64_t value, size_t pos) {
-    value = convert_uint64(value);
+    //value = convert_uint64(value);
     arr[pos] = (value >> 56) & 0xff;
     arr[pos + 1] = (value >> 48) & 0xff;
     arr[pos + 2] = (value >> 40) & 0xff;

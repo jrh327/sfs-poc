@@ -6,6 +6,17 @@
 #include "util.h"
 
 /**
+ * Create a directory entry with the given properties.
+ *
+ * @param parent the parent directory of the new entry
+ * @param filename the name of the new entry
+ * @param file_length the length of the file represented by the new entry
+ * @return the newly created directory entry
+ */
+struct directory_entry* create_directory_entry(struct directory_entry* parent,
+        const char* filename, const uint64_t file_length);
+
+/**
  * Read a directory entry from the filesystem.
  * 
  * @param sfs the filesystem to read from
@@ -22,6 +33,16 @@ struct directory_entry* read_directory_entry(const struct sfs_filesystem* sfs,
  */
 void write_directory_entry(const struct sfs_filesystem* sfs,
         struct directory_entry* dir_entry);
+
+/**
+ * Change a file's name.
+ *
+ * @param sfs the filesystem to write to
+ * @param file the file whose name is being changed
+ * @param filename the new filename
+ */
+void change_file_name(const struct sfs_filesystem* sfs,
+        struct directory_entry* file, const char* filename);
 
 /**
  * Retrieve the directory entry for the root directory of the filesystem.
@@ -43,25 +64,6 @@ int get_directory_entries(const struct sfs_filesystem* sfs,
         struct directory_entry* parent);
 
 /**
- * Get an entry from a file allocation table.
- *
- * @param sfs the filesystem to read from
- * @param entry the location of the entry to retrieve
- * @return the value in the entry
- */
-struct fat_entry get_fat_entry(const struct sfs_filesystem* sfs,
-        const struct fat_entry entry);
-/**
- * Put an entry into a file allocation table.
- * 
- * @param sfs the filesystem to write to
- * @param location the location of the entry to write
- * @param entry the entry to write
- */
-void put_fat_entry(const struct sfs_filesystem* sfs,
-        const struct fat_entry location, const struct fat_entry entry);
-
-/**
  * Get the data from a cluster.
  * 
  * @param sfs the filesystem to read from
@@ -72,13 +74,35 @@ uint8_t* read_file_cluster(const struct sfs_filesystem* sfs,
         const struct fat_entry entry);
 
 /**
- * Read a cluster from the filesystem.
+ * Read data from the given clusters.
+ *
+ * @param sfs the filesystem to read from
+ * @param clusters the clusters to read from
+ * @param file_length length of the data to read
+ */
+uint8_t* read_file_clusters(const struct sfs_filesystem* sfs,
+        struct fat_list* clusters, const uint64_t file_length);
+
+/**
+ * Write a cluster to the filesystem.
  * 
  * @param sfs the filesystem to write to
  * @param entry the location to write to
  * @param cluster the bytes of the cluster
  */
 void write_file_cluster(const struct sfs_filesystem* sfs,
-        const struct fat_entry entry, uint8_t* cluster);
+        const struct fat_entry entry, const uint8_t* cluster);
+
+/**
+ * Write data to the given clusters.
+ *
+ * @param sfs the filesystem to write to
+ * @param clusters the clusters to write to
+ * @param data the data to write
+ * @param file_length length of the data
+ */
+void write_file_clusters(const struct sfs_filesystem* sfs,
+        struct fat_list* clusters, const uint8_t* data,
+        const uint64_t file_length);
 
 #endif /* FILES_H */

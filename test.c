@@ -1,6 +1,7 @@
 #include "sfs.h"
 #include "files.h"
 #include "util.h"
+#include "encryption/aes.h"
 
 const char* filename = "test.bin";
 
@@ -87,6 +88,8 @@ int test_reading_directory_entry() {
         return (-1);
     }
 
+    struct sfs_filesystem* sfs = initialize_new_filesystem(fp, 0, 512, 1);
+
     const uint8_t test_reserved = 0;
     const uint8_t test_attributes = 5;
 
@@ -141,12 +144,12 @@ int test_reading_directory_entry() {
         dir_entry->filename[i] = test_filename[i];
     }
 
-    struct sfs_filesystem sfs = { .fp = fp };
-    write_directory_entry(&sfs, dir_entry);
+    dir_entry->parent = get_root_directory(sfs);
+    write_directory_entry(sfs, dir_entry);
 
     free(dir_entry->filename);
     free(dir_entry);
-    fclose(fp);
+    fclose(sfs->fp);
 
     fp = fopen(filename, "rb");
     if (fp == NULL) {
@@ -154,13 +157,15 @@ int test_reading_directory_entry() {
         return (-1);
     }
 
-    sfs.fp = fp;
-    struct directory_entry empty = { 0 };
-    dir_entry = read_directory_entry(&sfs, &empty);
+    sfs = load_filesystem(fp);
+    sfs->fp = fp;
+    struct directory_entry* root = get_root_directory(sfs);
+    get_directory_entries(sfs, root);
+    dir_entry = root->contents->entry; /* first entry in the root */
 
     fclose(fp);
 
-    delete_tmp_file();
+    //delete_tmp_file();
 
     int ret = 0;
     if (dir_entry->reserved != test_reserved) {
@@ -300,6 +305,8 @@ int test_read_dir_entry_short_filename() {
         printf("error creating file\n");
         return (-1);
     }
+
+    struct sfs_filesystem* sfs = initialize_new_filesystem(fp, 0, 512, 1);
     const uint8_t test_filename[9] = {
             'f', 'i', 'l', 'e', '.', 't', 'x', 't', '\0'
     };
@@ -310,8 +317,9 @@ int test_read_dir_entry_short_filename() {
         dir_entry->filename[i] = test_filename[i];
     }
 
-    struct sfs_filesystem sfs = { .fp = fp };
-    write_directory_entry(&sfs, dir_entry);
+    dir_entry->parent = get_root_directory(sfs);
+
+    write_directory_entry(sfs, dir_entry);
 
     free(dir_entry->filename);
     free(dir_entry);
@@ -323,9 +331,11 @@ int test_read_dir_entry_short_filename() {
         return (-1);
     }
 
-    sfs.fp = fp;
-    struct directory_entry empty = { 0 };
-    dir_entry = read_directory_entry(&sfs, &empty);
+    sfs = load_filesystem(fp);
+    sfs->fp = fp;
+    struct directory_entry* root = get_root_directory(sfs);
+    get_directory_entries(sfs, root);
+    dir_entry = root->contents->entry; /* first entry in the root */
 
     fclose(fp);
 
@@ -348,24 +358,21 @@ int test_read_dir_entry_long_filename() {
         printf("error creating file\n");
         return (-1);
     }
-    const uint8_t test_filename[69] = {
-            'f', 'i', 'l', 'e', 'n', 'a', 'm', 'e', 't', 'x', 't',
-            1, 'f', 'i', 'l', 'e', 'n', 'a', 'm', 'e', 't', 'x', 't',
-            'f', 'i', 'l', 'e', 'n', 'a', 'm', 'e', 't', 'x', 't', 'f',
-            'i', 'l', 'e', 'n', 'a', 'm', 'e', 't',
-            2, 'x', 't', 'f', 'i', 'l', 'e', 'n', 'a', 'm', 'e', 't',
-            'x', 't', 'f', 'i', 'l', 'e', 'n', 'a', 'm', 'e', 't', 'x',
-            't', 0
-    };
+
+    struct sfs_filesystem* sfs = initialize_new_filesystem(fp, 0, 512, 1);
+    const char* test_filename = "filenametxtfilenametxtfilenametxtfilenametxtfilenametxtfilenametxt";
     struct directory_entry* dir_entry = malloc(sizeof(struct directory_entry));
     dir_entry->filename_entries = 2;
-    dir_entry->filename = malloc(sizeof(test_filename));
-    for (size_t i = 0; i < 11; i++) {
+    size_t len = strlen(test_filename);
+    dir_entry->filename = malloc(len + 1);
+    for (size_t i = 0; i < len; i++) {
         dir_entry->filename[i] = test_filename[i];
     }
+    dir_entry->filename[len] = 0;
 
-    struct sfs_filesystem sfs = { .fp = fp };
-    write_directory_entry(&sfs, dir_entry);
+    dir_entry->parent = get_root_directory(sfs);
+
+    write_directory_entry(sfs, dir_entry);
 
     free(dir_entry->filename);
     free(dir_entry);
@@ -377,14 +384,15 @@ int test_read_dir_entry_long_filename() {
         return (-1);
     }
 
-    sfs.fp = fp;
-    struct directory_entry empty = { 0 };
-    dir_entry = read_directory_entry(&sfs, &empty);
+    sfs->fp = fp;
+    struct directory_entry* root = get_root_directory(sfs);
+    get_directory_entries(sfs, root);
+    dir_entry = root->contents->entry; /* first entry in the root */
 
     int ret = 0;
 
     /* make sure reserved bytes are set correctly */
-    fseek(fp, 0, SEEK_SET);
+    fseek(fp, BOOT_SECTOR_SIZE + sfs->entries_per_fat * FAT_ENTRY_SIZE, SEEK_SET);
     for (size_t i = 0; i < 3; i++) {
         uint8_t entry[DIR_ENTRY_SIZE] = { 0 };
         fread(&entry, DIR_ENTRY_SIZE, 1, fp);
@@ -396,13 +404,10 @@ int test_read_dir_entry_long_filename() {
     }
     fclose(fp);
 
-    delete_tmp_file();
+    //delete_tmp_file();
 
     char* filename = dir_entry->filename;
-    for (size_t i = 0; i < 11; i++) {
-        if ((i + 11) % 32 == 0) {
-            i++; /* skip first byte of each entry */
-        }
+    for (size_t i = 0; i < len; i++) {
         if (*filename != test_filename[i]) {
             printf("filename[%zu] - expected %c, got %c\n", i, test_filename[i],
                     *filename);
@@ -526,6 +531,89 @@ int test_new_bootsector_constraints() {
     return (ret);
 }
 
+int test_create_file() {
+    FILE* fp = fopen(filename, "wb");
+    if (fp == NULL) {
+        printf("error creating file\n");
+        return (-1);
+    }
+
+    const uint16_t fat_size = FAT_SIZE_SMALL;
+    const uint16_t bytes_per_sector = 512;
+    const uint16_t sectors_per_cluster = 1;
+    struct sfs_filesystem* sfs = initialize_new_filesystem(fp, fat_size,
+            bytes_per_sector, sectors_per_cluster);
+    struct directory_entry* root = get_root_directory(sfs);
+
+    const char* filename = "test.txt";
+    uint64_t file_length = 52;
+    uint8_t* data = malloc(file_length);
+    uint8_t* ptr_data = data;
+    for (size_t i = 0; i < 26; i++) {
+        *ptr_data = (char)('a' + i);
+        ptr_data++;
+    }
+    for (size_t i = 0; i < 26; i++) {
+        *ptr_data = (char)('A' + i);
+        ptr_data++;
+    }
+
+    struct directory_entry* file = create_file(sfs, root, "test.txt", data,
+            file_length);
+
+    free(data);
+
+    int ret = 0;
+    if (strcmp(file->filename, filename)) {
+        printf("filename - expected %s, got %s\n",
+            filename, file->filename);
+        ret = -1;
+    }
+    if (file->table_number != 0) {
+        printf("table number - expected %d, got %d\n",
+                0, file->table_number);
+        ret = -1;
+    }
+    if (file->first_cluster != 1) {
+        printf("first cluster - expected %d, got %d\n",
+                1, file->first_cluster);
+        ret = -1;
+    }
+    if (file->file_length != 52) {
+        printf("file length - expected %d, got %d\n",
+                52, file->file_length);
+        ret = -1;
+    }
+
+    uint64_t file_start = BOOT_SECTOR_SIZE
+            + sfs->entries_per_fat * FAT_ENTRY_SIZE
+            + sfs->bytes_per_sector * sfs->sectors_per_cluster;
+    fseek(fp, file_start, SEEK_SET);
+    data = malloc(file_length);
+    fread(data, file_length, 1, fp);
+    ptr_data = data;
+    for (size_t i = 0; i < 26; i++) {
+        if (*ptr_data != (char)('a' + i)) {
+            printf("file data - expected %c, got %c\n",
+                    (char)('a' + i), *ptr_data);
+            ret = -1;
+        }
+        ptr_data++;
+    }
+    for (size_t i = 0; i < 26; i++) {
+        if (*ptr_data != (char)('A' + i)) {
+            printf("file data - expected %c, got %c\n",
+                    (char)('A' + i), *ptr_data);
+            ret = -1;
+        }
+        ptr_data++;
+    }
+
+    delete_tmp_file();
+
+    return (ret);
+}
+
 void run_test(char* test_name, int (*test)()) {
     printf("--------------------\n");
     int result = test();
@@ -547,4 +635,7 @@ int main() {
             test_read_dir_entry_short_filename);
     run_test("test_read_dir_entry_long_filename",
             test_read_dir_entry_long_filename);
+    run_test("test_create_file", test_create_file);
+
+    /* test_aes(0, NULL); */
 }
