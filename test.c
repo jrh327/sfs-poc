@@ -558,7 +558,7 @@ int test_create_file() {
         ptr_data++;
     }
 
-    struct directory_entry* file = create_file(sfs, root, "test.txt", data,
+    struct directory_entry* file = create_file(sfs, root, filename, data,
             file_length);
 
     free(data);
@@ -614,6 +614,65 @@ int test_create_file() {
     return (ret);
 }
 
+int test_read_file() {
+    FILE* fp = fopen(filename, "wb");
+    if (fp == NULL) {
+        printf("error creating file\n");
+        return (-1);
+    }
+
+    const uint16_t fat_size = FAT_SIZE_SMALL;
+    const uint16_t bytes_per_sector = 512;
+    const uint16_t sectors_per_cluster = 1;
+    struct sfs_filesystem* sfs = initialize_new_filesystem(fp, fat_size,
+            bytes_per_sector, sectors_per_cluster);
+    struct directory_entry* root = get_root_directory(sfs);
+
+    const char* filename = "test.txt";
+    uint64_t file_length = 52;
+    uint8_t* data = malloc(file_length);
+    uint8_t* ptr_data = data;
+    for (size_t i = 0; i < 26; i++) {
+        *ptr_data = (char)('a' + i);
+        ptr_data++;
+    }
+    for (size_t i = 0; i < 26; i++) {
+        *ptr_data = (char)('A' + i);
+        ptr_data++;
+    }
+
+    struct directory_entry* file = create_file(sfs, root, filename, data,
+            file_length);
+
+    free(data);
+
+    int ret = 0;
+
+    data = read_file(sfs, file);
+
+    ptr_data = data;
+    for (size_t i = 0; i < 26; i++) {
+        if (*ptr_data != (char)('a' + i)) {
+            printf("file data - expected %c, got %c\n",
+                    (char)('a' + i), *ptr_data);
+            ret = -1;
+        }
+        ptr_data++;
+    }
+    for (size_t i = 0; i < 26; i++) {
+        if (*ptr_data != (char)('A' + i)) {
+            printf("file data - expected %c, got %c\n",
+                    (char)('A' + i), *ptr_data);
+            ret = -1;
+        }
+        ptr_data++;
+    }
+
+    delete_tmp_file();
+
+    return (ret);
+}
+
 void run_test(char* test_name, int (*test)()) {
     printf("--------------------\n");
     int result = test();
@@ -636,6 +695,7 @@ int main() {
     run_test("test_read_dir_entry_long_filename",
             test_read_dir_entry_long_filename);
     run_test("test_create_file", test_create_file);
+    run_test("test_read_file", test_read_file);
 
     /* test_aes(0, NULL); */
 }
