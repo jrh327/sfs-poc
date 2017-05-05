@@ -115,12 +115,11 @@ void write_uint64(FILE* fp, uint64_t value);
  * This function assumes the value in the array is in big-endian format, and
  * will convert to little-endian if needed because of the current system.
  * 
- * This function assumes pos + sizeof(value) does not extend past the end
+ * This function assumes pos + sizeof(uint16_t) does not extend past the end
  * of the array.
  * 
- * @param arr the array to insert into
- * @param value the value to insert
- * @param pos the position to start inserting
+ * @param arr the array to read from
+ * @param pos the position to start reading
  */
 uint16_t get_uint16(uint8_t arr[], size_t pos);
 
@@ -130,12 +129,11 @@ uint16_t get_uint16(uint8_t arr[], size_t pos);
  * This function assumes the value in the array is in big-endian format, and
  * will convert to little-endian if needed because of the current system.
  * 
- * This function assumes pos + sizeof(value) does not extend past the end
+ * This function assumes pos + sizeof(uint32_t) does not extend past the end
  * of the array.
  * 
- * @param arr the array to insert into
- * @param value the value to insert
- * @param pos the position to start inserting
+ * @param arr the array to read from
+ * @param pos the position to start reading
  */
 uint32_t get_uint32(uint8_t arr[], size_t pos);
 
@@ -145,12 +143,11 @@ uint32_t get_uint32(uint8_t arr[], size_t pos);
  * This function assumes the value in the array is in big-endian format, and
  * will convert to little-endian if needed because of the current system.
  * 
- * This function assumes pos + sizeof(value) does not extend past the end
+ * This function assumes pos + sizeof(uint64_t) does not extend past the end
  * of the array.
  * 
- * @param arr the array to insert into
- * @param value the value to insert
- * @param pos the position to start inserting
+ * @param arr the array to read from
+ * @param pos the position to start reading
  */
 uint64_t get_uint64(uint8_t arr[], size_t pos);
 
