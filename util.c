@@ -8,6 +8,27 @@
 const int ENDIANNESS = 1;
 #define IS_BIGENDIAN ((*(char*)&ENDIANNESS) == 0)
 
+inline void read_from_file(int fd, void* buf, uint64_t length) {
+    read(fd, buf, length);
+}
+
+inline void write_to_file(int fd, const void* data, uint64_t length) {
+    write(fd, data, length);
+}
+
+inline void seek_in_file(int fd, uint64_t offset, int mode) {
+    lseek(fd, offset, mode);
+}
+
+inline int close_file(int fd) {
+    int err = close(fd);
+    return (err);
+}
+
+inline uint64_t tell_file(int fd) {
+    return (lseek(fd, 0, SEEK_CUR));
+}
+
 uint16_t convert_uint16(uint16_t value) {
     if (IS_BIGENDIAN) {
         return (value);
@@ -56,47 +77,47 @@ uint64_t convert_uint64(uint64_t value) {
     }
 }
 
-uint8_t read_uint8(FILE* fp) {
+uint8_t read_uint8(int fd) {
     uint8_t value;
-    fread(&value, sizeof(value), 1, fp);
+    read_from_file(fd, &value, sizeof(value));
     return (value);
 }
 
-uint16_t read_uint16(FILE* fp) {
+uint16_t read_uint16(int fd) {
     uint16_t value;
-    fread(&value, sizeof(value), 1, fp);
+    read_from_file(fd, &value, sizeof(value));
     return (convert_uint16(value));
 }
 
-uint32_t read_uint32(FILE* fp) {
+uint32_t read_uint32(int fd) {
     uint32_t value;
-    fread(&value, sizeof(value), 1, fp);
+    read_from_file(fd, &value, sizeof(value));
     return (convert_uint32(value));
 }
 
-uint64_t read_uint64(FILE* fp) {
+uint64_t read_uint64(int fd) {
     uint64_t value;
-    fread(&value, sizeof(value), 1, fp);
+    read_from_file(fd, &value, sizeof(value));
     return (convert_uint64(value));
 }
 
-void write_uint8(FILE* fp, uint8_t value) {
-    fwrite(&value, sizeof(value), 1, fp);
+void write_uint8(int fd, uint8_t value) {
+    write_to_file(fd, &value, sizeof(value));
 }
 
-void write_uint16(FILE* fp, uint16_t value) {
+void write_uint16(int fd, uint16_t value) {
     value = convert_uint16(value);
-    fwrite(&value, sizeof(value), 1, fp);
+    write_to_file(fd, &value, sizeof(value));
 }
 
-void write_uint32(FILE* fp, uint32_t value) {
+void write_uint32(int fd, uint32_t value) {
     value = convert_uint32(value);
-    fwrite(&value, sizeof(value), 1, fp);
+    write_to_file(fd, &value, sizeof(value));
 }
 
-void write_uint64(FILE* fp, uint64_t value) {
+void write_uint64(int fd, uint64_t value) {
     value = convert_uint64(value);
-    fwrite(&value, sizeof(value), 1, fp);
+    write_to_file(fd, &value, sizeof(value));
 }
 
 uint16_t get_uint16(uint8_t arr[], size_t pos) {

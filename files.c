@@ -107,7 +107,7 @@ struct directory_entry* create_directory_entry(struct directory_entry* parent,
 struct directory_entry* read_directory_entry(const struct sfs_filesystem* sfs,
         struct directory_entry* parent) {
     uint8_t entry[DIR_ENTRY_SIZE] = { 0 };
-    fread(&entry, sizeof(entry), 1, sfs->fp);
+    read_from_file(sfs->fd, &entry, DIR_ENTRY_SIZE);
 
     int empty_entry = 1;
     for (size_t i = 0; i < DIR_ENTRY_SIZE; i++) {
@@ -188,7 +188,7 @@ struct directory_entry* read_directory_entry(const struct sfs_filesystem* sfs,
         size_t len = 0;
         for (size_t i = 0; i < filename_entries; i++) {
             /* TODO: make sure successive reads are in the correct cluster */
-            fread((extra_entries + index), DIR_ENTRY_SIZE, 1, sfs->fp);
+            read_from_file(sfs->fd, (extra_entries + index), DIR_ENTRY_SIZE);
             index += DIR_ENTRY_SIZE;
             len += (DIR_ENTRY_SIZE - 1);
         }
@@ -241,7 +241,7 @@ int jump_to_empty_entry(const struct sfs_filesystem* sfs,
         /* loop through cluster and find an empty entry */
         for (size_t i = 0; i < sizeof_cluster; i += DIR_ENTRY_SIZE) {
             uint8_t* entry = malloc(DIR_ENTRY_SIZE);
-            fread(entry, DIR_ENTRY_SIZE, 1, sfs->fp);
+            read_from_file(sfs->fd, entry, DIR_ENTRY_SIZE);
             int empty = 1;
             for (size_t j = 0; j < DIR_ENTRY_SIZE; j++) {
                 if (entry[j] != 0) {
@@ -253,7 +253,7 @@ int jump_to_empty_entry(const struct sfs_filesystem* sfs,
             if (empty) {
                 found = 1;
                 /* move back to beginning of the entry */
-                fseek(sfs->fp, -DIR_ENTRY_SIZE, SEEK_CUR);
+                seek_in_file(sfs->fd, -DIR_ENTRY_SIZE, SEEK_CUR);
                 break;
             }
             count++;
@@ -316,7 +316,7 @@ void write_directory_entry(const struct sfs_filesystem* sfs,
         entry[21 + i] = dir_entry->filename[i];
     }
 
-    fwrite(&entry, DIR_ENTRY_SIZE, 1, sfs->fp);
+    write_to_file(sfs->fd, &entry, DIR_ENTRY_SIZE);
 
     /* TODO make sure extra entries are going in the correct cluster */
     uint16_t entries_per_cluster = (sfs->bytes_per_sector
@@ -344,7 +344,7 @@ void write_directory_entry(const struct sfs_filesystem* sfs,
         for (size_t i = index_end; i < DIR_ENTRY_SIZE; i++) {
             entry[i] = 0;
         }
-        fwrite(&entry, DIR_ENTRY_SIZE, 1, sfs->fp);
+        write_to_file(sfs->fd, &entry, DIR_ENTRY_SIZE);
     }
 }
 
@@ -428,7 +428,7 @@ uint8_t* read_file_cluster(const struct sfs_filesystem* sfs,
     uint32_t cluster_size = sfs->bytes_per_sector * sfs->sectors_per_cluster;
     uint8_t* cluster = malloc(cluster_size);
 
-    fread(cluster, cluster_size, 1, sfs->fp);
+    read_from_file(sfs->fd, cluster, cluster_size);
     return (cluster);
 }
 
@@ -460,7 +460,7 @@ void write_file_cluster(const struct sfs_filesystem* sfs,
 
     uint32_t cluster_size = sfs->bytes_per_sector * sfs->sectors_per_cluster;
 
-    fwrite(cluster, cluster_size, 1, sfs->fp);
+    write_to_file(sfs->fd, cluster, cluster_size);
 }
 
 void write_file_clusters(const struct sfs_filesystem* sfs,

@@ -5,5 +5,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #endif /* INCLUDES_H */

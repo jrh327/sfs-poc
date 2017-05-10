@@ -43,6 +43,7 @@ struct fat_entry find_next_avail_fat_entry(const struct sfs_filesystem* sfs,
  */
 struct fat_entry get_fat_entry(const struct sfs_filesystem* sfs,
         const struct fat_entry entry);
+
 /**
  * Put an entry into a file allocation table.
  *

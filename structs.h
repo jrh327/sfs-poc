@@ -34,7 +34,7 @@ struct fat_entry {
  * filesystem.
  */
 struct sfs_filesystem {
-    FILE* fp;
+    int fd;
     uint64_t partition_offset;
     uint16_t entries_per_fat;
     uint16_t bytes_per_sector;

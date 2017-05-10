@@ -13,35 +13,35 @@ void delete_tmp_file() {
 }
 
 int test_writing_uint16() {
-    FILE* fp = fopen(filename, "wb");
-    if (fp == NULL) {
+    int fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    if (fd < 0) {
         printf("error creating file\n");
         return (-1);
     }
     const uint16_t test_val = 0x1234;
-    write_uint16(fp, test_val);
-    fclose(fp);
+    write_uint16(fd, test_val);
+    close_file(fd);
 
-    fp = fopen(filename, "rb");
-    if (fp == NULL) {
+    fd = open(filename, O_RDWR);
+    if (fd < 0) {
         printf("error reading file\n");
         return (-1);
     }
 
     int ret = 0;
     uint8_t byte;
-    fread(&byte, sizeof(byte), 1, fp);
+    read_from_file(fd, &byte, sizeof(byte));
     if (byte != 0x12) {
         printf("first byte - expected: %d, got %d\n", 0x12, byte);
         ret = -1;
     }
 
-    fread(&byte, sizeof(byte), 1, fp);
+    read_from_file(fd, &byte, sizeof(byte));
     if (byte != 0x34) {
         printf("second byte - expected: %d, got %d\n", 0x34, byte);
         ret = -1;
     }
-    fclose(fp);
+    close_file(fd);
 
     delete_tmp_file();
 
@@ -49,32 +49,32 @@ int test_writing_uint16() {
 }
 
 int test_reading_uint16() {
-    FILE* fp = fopen(filename, "wb");
-    if (fp == NULL) {
+    int fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    if (fd < 0) {
         printf("error creating file\n");
         return (-1);
     }
 
     uint8_t byte = 0x12;
-    fwrite(&byte, sizeof(byte), 1, fp);
+    write_to_file(fd, &byte, sizeof(byte));
     byte = 0x34;
-    fwrite(&byte, sizeof(byte), 1, fp);
-    fclose(fp);
+    write_to_file(fd, &byte, sizeof(byte));
+    close_file(fd);
 
-    fp = fopen(filename, "rb");
-    if (fp == NULL) {
+    fd = open(filename, O_RDWR);
+    if (fd < 0) {
         printf("error reading file\n");
         return (-1);
     }
 
     int ret = 0;
     const uint16_t test_val = 0x1234;
-    uint16_t read_val = read_uint16(fp);
+    uint16_t read_val = read_uint16(fd);
     if (read_val != test_val) {
         printf("read value - expected: %d, got %d\n", test_val, read_val);
         ret = -1;
     }
-    fclose(fp);
+    close_file(fd);
 
     delete_tmp_file();
 
@@ -82,13 +82,13 @@ int test_reading_uint16() {
 }
 
 int test_reading_directory_entry() {
-    FILE* fp = fopen(filename, "wb");
-    if (fp == NULL) {
+    int fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    if (fd < 0) {
         printf("error creating file\n");
         return (-1);
     }
 
-    struct sfs_filesystem* sfs = initialize_new_filesystem(fp, 0, 512, 1);
+    struct sfs_filesystem* sfs = initialize_new_filesystem(fd, 0, 512, 1);
 
     const uint8_t test_reserved = 0;
     const uint8_t test_attributes = 5;
@@ -149,23 +149,23 @@ int test_reading_directory_entry() {
 
     free(dir_entry->filename);
     free(dir_entry);
-    fclose(sfs->fp);
+    close_file(sfs->fd);
 
-    fp = fopen(filename, "rb");
-    if (fp == NULL) {
+    fd = open(filename, O_RDWR);
+    if (fd < 0) {
         printf("error reading file\n");
         return (-1);
     }
 
-    sfs = load_filesystem(fp);
-    sfs->fp = fp;
+    sfs = load_filesystem(fd);
+    sfs->fd = fd;
     struct directory_entry* root = get_root_directory(sfs);
     get_directory_entries(sfs, root);
     dir_entry = root->contents->entry; /* first entry in the root */
 
-    fclose(fp);
+    close_file(fd);
 
-    //delete_tmp_file();
+    delete_tmp_file();
 
     int ret = 0;
     if (dir_entry->reserved != test_reserved) {
@@ -300,13 +300,13 @@ int test_reading_directory_entry() {
 }
 
 int test_read_dir_entry_short_filename() {
-    FILE* fp = fopen(filename, "wb");
-    if (fp == NULL) {
+    int fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    if (fd < 0) {
         printf("error creating file\n");
         return (-1);
     }
 
-    struct sfs_filesystem* sfs = initialize_new_filesystem(fp, 0, 512, 1);
+    struct sfs_filesystem* sfs = initialize_new_filesystem(fd, 0, 512, 1);
     const uint8_t test_filename[9] = {
             'f', 'i', 'l', 'e', '.', 't', 'x', 't', '\0'
     };
@@ -323,21 +323,21 @@ int test_read_dir_entry_short_filename() {
 
     free(dir_entry->filename);
     free(dir_entry);
-    fclose(fp);
+    close_file(fd);
 
-    fp = fopen(filename, "rb");
-    if (fp == NULL) {
+    fd = open(filename, O_RDWR);
+    if (fd < 0) {
         printf("error reading file\n");
         return (-1);
     }
 
-    sfs = load_filesystem(fp);
-    sfs->fp = fp;
+    sfs = load_filesystem(fd);
+    sfs->fd = fd;
     struct directory_entry* root = get_root_directory(sfs);
     get_directory_entries(sfs, root);
     dir_entry = root->contents->entry; /* first entry in the root */
 
-    fclose(fp);
+    close_file(fd);
 
     delete_tmp_file();
 
@@ -353,13 +353,13 @@ int test_read_dir_entry_short_filename() {
 }
 
 int test_read_dir_entry_long_filename() {
-    FILE* fp = fopen(filename, "wb");
-    if (fp == NULL) {
+    int fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    if (fd < 0) {
         printf("error creating file\n");
         return (-1);
     }
 
-    struct sfs_filesystem* sfs = initialize_new_filesystem(fp, 0, 512, 1);
+    struct sfs_filesystem* sfs = initialize_new_filesystem(fd, 0, 512, 1);
     const char* test_filename = "filenametxtfilenametxtfilenametxtfilenametxtfilenametxtfilenametxt";
     struct directory_entry* dir_entry = malloc(sizeof(struct directory_entry));
     dir_entry->filename_entries = 2;
@@ -376,15 +376,15 @@ int test_read_dir_entry_long_filename() {
 
     free(dir_entry->filename);
     free(dir_entry);
-    fclose(fp);
+    close_file(fd);
 
-    fp = fopen(filename, "rb");
-    if (fp == NULL) {
+    fd = open(filename, O_RDWR);
+    if (fd < 0) {
         printf("error reading file\n");
         return (-1);
     }
 
-    sfs->fp = fp;
+    sfs->fd = fd;
     struct directory_entry* root = get_root_directory(sfs);
     get_directory_entries(sfs, root);
     dir_entry = root->contents->entry; /* first entry in the root */
@@ -392,17 +392,17 @@ int test_read_dir_entry_long_filename() {
     int ret = 0;
 
     /* make sure reserved bytes are set correctly */
-    fseek(fp, BOOT_SECTOR_SIZE + sfs->entries_per_fat * FAT_ENTRY_SIZE, SEEK_SET);
+    seek_in_file(fd, BOOT_SECTOR_SIZE + sfs->entries_per_fat * FAT_ENTRY_SIZE, SEEK_SET);
     for (size_t i = 0; i < 3; i++) {
         uint8_t entry[DIR_ENTRY_SIZE] = { 0 };
-        fread(&entry, DIR_ENTRY_SIZE, 1, fp);
+        read_from_file(fd, &entry, DIR_ENTRY_SIZE);
         if (entry[0] != i) {
             printf("entry %zu - expected reserved byte to be %zu, got %d\n",
                     i, i, entry[0]);
             ret = -1;
         }
     }
-    fclose(fp);
+    close_file(fd);
 
     //delete_tmp_file();
 
@@ -419,8 +419,8 @@ int test_read_dir_entry_long_filename() {
 }
 
 int test_new_bootsector_constraints() {
-    FILE* fp = fopen(filename, "wb");
-    if (fp == NULL) {
+    int fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    if (fd < 0) {
         printf("error creating file\n");
         return (-1);
     }
@@ -431,7 +431,7 @@ int test_new_bootsector_constraints() {
     uint16_t expected_fat_size = FAT_SIZE_MEDIUM;
     uint16_t expected_bytes_per_sector = 512;
     uint8_t expected_sectors_per_cluster = 64;
-    struct sfs_filesystem* sfs = initialize_filesystem_partition(fp, 0,
+    struct sfs_filesystem* sfs = initialize_filesystem_partition(fd, 0,
             init_fat_size, init_bytes_per_sector, init_sectors_per_cluster);
     int ret = 0;
     if (sfs->entries_per_fat != expected_fat_size) {
@@ -452,12 +452,12 @@ int test_new_bootsector_constraints() {
         ret = -1;
     }
 
-    fclose(fp);
+    close(fd);
 
     delete_tmp_file();
 
-    fp = fopen(filename, "wb");
-    if (fp == NULL) {
+    fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    if (fd < 0) {
         printf("error creating file\n");
         return (-1);
     }
@@ -468,7 +468,7 @@ int test_new_bootsector_constraints() {
     expected_fat_size = FAT_SIZE_MEDIUM; /* default */
     expected_bytes_per_sector = 512; /* minimum */
     expected_sectors_per_cluster = 64; /* 32K byte max cluster size */
-    sfs = initialize_filesystem_partition(fp, 0, init_fat_size,
+    sfs = initialize_filesystem_partition(fd, 0, init_fat_size,
             init_bytes_per_sector, init_sectors_per_cluster);
     if (sfs->entries_per_fat != expected_fat_size) {
         printf("entries_per_fat 2 - expected %d, got %d\n", expected_fat_size,
@@ -488,12 +488,12 @@ int test_new_bootsector_constraints() {
         ret = -1;
     }
 
-    fclose(fp);
+    close_file(fd);
 
     delete_tmp_file();
 
-    fp = fopen(filename, "wb");
-    if (fp == NULL) {
+    fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    if (fd < 0) {
         printf("error creating file\n");
         return (-1);
     }
@@ -504,7 +504,7 @@ int test_new_bootsector_constraints() {
     expected_fat_size = FAT_SIZE_MEDIUM; /* default */
     expected_bytes_per_sector = 512; /* uses MSB if not power of 2 */
     expected_sectors_per_cluster = 16; /* uses MSB if not power of 2 */
-    sfs = initialize_filesystem_partition(fp, 0, init_fat_size,
+    sfs = initialize_filesystem_partition(fd, 0, init_fat_size,
             init_bytes_per_sector, init_sectors_per_cluster);
     if (sfs->entries_per_fat != expected_fat_size) {
         printf("entries_per_fat 3 - expected %d, got %d\n", expected_fat_size,
@@ -524,7 +524,7 @@ int test_new_bootsector_constraints() {
         ret = -1;
     }
 
-    fclose(fp);
+    close_file(fd);
 
     delete_tmp_file();
 
@@ -532,8 +532,8 @@ int test_new_bootsector_constraints() {
 }
 
 int test_create_file() {
-    FILE* fp = fopen(filename, "wb");
-    if (fp == NULL) {
+    int fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    if (fd < 0) {
         printf("error creating file\n");
         return (-1);
     }
@@ -541,7 +541,7 @@ int test_create_file() {
     const uint16_t fat_size = FAT_SIZE_SMALL;
     const uint16_t bytes_per_sector = 512;
     const uint16_t sectors_per_cluster = 1;
-    struct sfs_filesystem* sfs = initialize_new_filesystem(fp, fat_size,
+    struct sfs_filesystem* sfs = initialize_new_filesystem(fd, fat_size,
             bytes_per_sector, sectors_per_cluster);
     struct directory_entry* root = get_root_directory(sfs);
 
@@ -588,9 +588,9 @@ int test_create_file() {
     uint64_t file_start = BOOT_SECTOR_SIZE
             + sfs->entries_per_fat * FAT_ENTRY_SIZE
             + sfs->bytes_per_sector * sfs->sectors_per_cluster;
-    fseek(fp, file_start, SEEK_SET);
+    seek_in_file(fd, file_start, SEEK_SET);
     data = malloc(file_length);
-    fread(data, file_length, 1, fp);
+    read_from_file(fd, data, file_length);
     ptr_data = data;
     for (size_t i = 0; i < 26; i++) {
         if (*ptr_data != (char)('a' + i)) {
@@ -615,8 +615,8 @@ int test_create_file() {
 }
 
 int test_read_file() {
-    FILE* fp = fopen(filename, "wb");
-    if (fp == NULL) {
+    int fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    if (fd < 0) {
         printf("error creating file\n");
         return (-1);
     }
@@ -624,7 +624,7 @@ int test_read_file() {
     const uint16_t fat_size = FAT_SIZE_SMALL;
     const uint16_t bytes_per_sector = 512;
     const uint16_t sectors_per_cluster = 1;
-    struct sfs_filesystem* sfs = initialize_new_filesystem(fp, fat_size,
+    struct sfs_filesystem* sfs = initialize_new_filesystem(fd, fat_size,
             bytes_per_sector, sectors_per_cluster);
     struct directory_entry* root = get_root_directory(sfs);
 

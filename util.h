@@ -4,6 +4,49 @@
 #include "includes.h"
 
 /**
+ * Read data from a file.
+ * 
+ * @param fd the file to read from
+ * @param buf pointer to read into
+ * @param length number of bytes to read
+ */
+void read_from_file(int fd, void* buf, uint64_t length);
+
+/**
+ * Write data to a file.
+ * 
+ * @param fd the file to write to
+ * @param data pointer to the data to write
+ * @param length number of bytes to write
+ */
+void write_to_file(int fd, const void* data, uint64_t length);
+
+/**
+ * Move to a position in a file.
+ * 
+ * @param fd the file to seek in
+ * @param offset how far to move
+ * @param mode whether to move from the beginning, end, or current position
+ */
+void seek_in_file(int fd, uint64_t offset, int mode);
+
+/**
+ * Close a file.
+ * 
+ * @param the file to close
+ * @return success or failure
+ */
+int close_file(int fd);
+
+/**
+ * Get the length of a file.
+ * 
+ * @param fd the file whose length to get
+ * @return the length of the file
+ */
+uint64_t tell_file(int fd);
+
+/**
  * Put the bytes of a 16-bit value in big-endian order.
  * 
  * @param value the value to put in big-endian order
@@ -30,10 +73,10 @@ uint64_t convert_uint64(uint64_t value);
 /**
  * Read a 8-bit value from the given file.
  * 
- * @param fp the file to read from
+ * @param fd the file to read from
  * @return the value that is read from the file
  */
-uint8_t read_uint8(FILE* fp);
+uint8_t read_uint8(int fd);
 
 /**
  * Read a 16-bit value from the given file.
@@ -41,10 +84,10 @@ uint8_t read_uint8(FILE* fp);
  * The value is expected to be in big-endian format. This function will
  * convert to little-endian if needed by the current system.
  * 
- * @param fp the file to read from
+ * @param fd the file to read from
  * @return the value that is read from the file
  */
-uint16_t read_uint16(FILE* fp);
+uint16_t read_uint16(int fd);
 
 /**
  * Read a 32-bit value from the given file.
@@ -52,10 +95,10 @@ uint16_t read_uint16(FILE* fp);
  * The value is expected to be in big-endian format. This function will
  * convert to little-endian if needed by the current system.
  * 
- * @param fp the file to read from
+ * @param fd the file to read from
  * @return the value that is read from the file
  */
-uint32_t read_uint32(FILE* fp);
+uint32_t read_uint32(int fd);
 
 /**
  * Read a 32-bit value from the given file.
@@ -63,18 +106,18 @@ uint32_t read_uint32(FILE* fp);
  * The value is expected to be in big-endian format. This function will
  * convert to little-endian if needed by the current system.
  * 
- * @param fp the file to read from
+ * @param fd the file to read from
  * @return the value that is read from the file
  */
-uint64_t read_uint64(FILE* fp);
+uint64_t read_uint64(int fd);
 
 /**
  * Write a 8-bit value to the given file.
  * 
- * @param fp the file to write to
+ * @param fd the file to write to
  * @param value the value to write
  */
-void write_uint8(FILE* fp, uint8_t value);
+void write_uint8(int fd, uint8_t value);
 
 /**
  * Write a 16-bit value to the given file.
@@ -82,10 +125,10 @@ void write_uint8(FILE* fp, uint8_t value);
  * The value will be written to the file in big-endian format. This function
  * will convert from little-endian if needed because of the current system.
  * 
- * @param fp the file to write to
+ * @param fd the file to write to
  * @param value the value to write
  */
-void write_uint16(FILE* fp, uint16_t value);
+void write_uint16(int fd, uint16_t value);
 
 /**
  * Write a 32-bit value to the given file.
@@ -93,10 +136,10 @@ void write_uint16(FILE* fp, uint16_t value);
  * The value will be written to the file in big-endian format. This function
  * will convert from little-endian if needed because of the current system.
  * 
- * @param fp the file to write to
+ * @param fd the file to write to
  * @param value the value to write
  */
-void write_uint32(FILE* fp, uint32_t value);
+void write_uint32(int fd, uint32_t value);
 
 /**
  * Write a 64-bit value to the given file.
@@ -104,10 +147,10 @@ void write_uint32(FILE* fp, uint32_t value);
  * The value will be written to the file in big-endian format. This function
  * will convert from little-endian if needed because of the current system.
  * 
- * @param fp the file to write to
+ * @param fd the file to write to
  * @param value the value to write
  */
-void write_uint64(FILE* fp, uint64_t value);
+void write_uint64(int fd, uint64_t value);
 
 /**
  * Retrieve a 16-bit value from the given byte array.

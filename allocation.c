@@ -10,17 +10,17 @@ void jump_to_fat(const struct sfs_filesystem* sfs, uint16_t fat_number) {
     uint64_t location = begin_data
             + fat_number * (sizeof_fat + sizeof_data_block);
 
-    FILE* fp = sfs->fp;
+    int fd = sfs->fd;
 
     /* check if going past the current end of the filesystem */
-    fseek(fp, 0, SEEK_END);
-    uint64_t size = ftell(fp);
-    fseek(fp, location, SEEK_SET);
+    seek_in_file(fd, 0, SEEK_END);
+    uint64_t size = tell_file(fd);
+    seek_in_file(fd, location, SEEK_SET);
 
     /* generate the FAT if we went past the end of the existing filesystem */
     if (size < location) {
         uint8_t* fat = calloc(1, sizeof_fat);
-        fwrite(fat, sizeof_fat, 1, fp);
+        write_to_file(fd, fat, sizeof_fat);
         free(fat);
     }
 }
@@ -31,43 +31,43 @@ void jump_to_cluster(const struct sfs_filesystem* sfs, struct fat_entry entry)  
     uint64_t sizeof_fat = sfs->entries_per_fat * FAT_ENTRY_SIZE;
     uint64_t sizeof_cluster = sfs->bytes_per_sector * sfs->sectors_per_cluster;
 
-    /* using ftell to get location relative to the beginning of the filesystem
+    /* using tell_file to get location relative to the beginning of the filesystem
      * instead of relative to the position set by the call to jump_to_fat() */
-    uint64_t cluster_location = ftell(sfs->fp) + sizeof_fat
+    uint64_t cluster_location = tell_file(sfs->fd) + sizeof_fat
             + sizeof_cluster * entry.cluster_number;
 
-    FILE* fp = sfs->fp;
+    int fd = sfs->fd;
 
     /* check if going past the current end of the filesystem */
-    fseek(fp, 0, SEEK_END);
-    uint64_t size = ftell(fp);
-    fseek(fp, cluster_location, SEEK_SET);
+    seek_in_file(fd, 0, SEEK_END);
+    uint64_t size = tell_file(fd);
+    seek_in_file(fd, cluster_location, SEEK_SET);
 
     /* generate the cluster if we went past the end of the existing filesystem */
     if (size <= cluster_location) {
         uint8_t* cluster = calloc(1, sizeof_cluster);
-        fwrite(cluster, sizeof_cluster, 1, fp);
+        write_to_file(fd, cluster, sizeof_cluster);
         free(cluster);
 
         /* rewind to beginning of cluster */
-        fseek(fp, cluster_location, SEEK_SET);
+        seek_in_file(fd, cluster_location, SEEK_SET);
     }
 }
 
 struct fat_entry find_next_avail_fat_entry(const struct sfs_filesystem* sfs,
         struct fat_entry start) {
-    FILE* fp = sfs->fp;
+    int fd = sfs->fd;
     uint16_t entries_per_fat = sfs->entries_per_fat;
 
     uint16_t fat_number = start.fat_number;
     uint16_t cluster_number = start.cluster_number;
     jump_to_fat(sfs, fat_number);
-    fseek(sfs->fp, cluster_number * FAT_ENTRY_SIZE, SEEK_CUR);
+    seek_in_file(sfs->fd, cluster_number * FAT_ENTRY_SIZE, SEEK_CUR);
 
     int found = 0;
     while (!found) {
-        uint16_t entry_fat_number = read_uint16(fp);
-        uint16_t entry_cluster_number = read_uint16(fp);
+        uint16_t entry_fat_number = read_uint16(fd);
+        uint16_t entry_cluster_number = read_uint16(fd);
 
         if (entry_fat_number == 0 && entry_cluster_number == 0) {
             found = 1;
@@ -94,11 +94,11 @@ struct fat_entry get_fat_entry(const struct sfs_filesystem* sfs,
         const struct fat_entry entry) {
     jump_to_fat(sfs, entry.fat_number);
 
-    FILE* fp = sfs->fp;
-    fseek(fp, entry.cluster_number * FAT_ENTRY_SIZE, SEEK_CUR);
+    int fd = sfs->fd;
+    seek_in_file(fd, entry.cluster_number * FAT_ENTRY_SIZE, SEEK_CUR);
 
-    uint16_t entry_fat_number = read_uint16(fp);
-    uint16_t entry_cluster_number = read_uint16(fp);
+    uint16_t entry_fat_number = read_uint16(fd);
+    uint16_t entry_cluster_number = read_uint16(fd);
     struct fat_entry new_entry = {
             .fat_number = entry_fat_number,
             .cluster_number = entry_cluster_number
@@ -110,11 +110,11 @@ void put_fat_entry(const struct sfs_filesystem* sfs,
         const struct fat_entry location, const struct fat_entry entry) {
     jump_to_fat(sfs, location.fat_number);
 
-    FILE* fp = sfs->fp;
-    fseek(fp, location.cluster_number * FAT_ENTRY_SIZE, SEEK_CUR);
+    int fd = sfs->fd;
+    seek_in_file(fd, location.cluster_number * FAT_ENTRY_SIZE, SEEK_CUR);
 
-    write_uint16(fp, entry.fat_number);
-    write_uint16(fp, entry.cluster_number);
+    write_uint16(fd, entry.fat_number);
+    write_uint16(fd, entry.cluster_number);
 }
 
 struct fat_entry allocate_cluster(const struct sfs_filesystem* sfs,
