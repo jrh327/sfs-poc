@@ -91,11 +91,14 @@ HIDDEN int sfs_io_read_cluster(const struct sfs_filesystem* sfs,
         sfs_util_seek_in_medium(sfs->fd, -offset, SEEK_CUR);
         curpos -= offset;
 
-        uint8_t* block = allocate(ENCRYPTION_BLOCK_SIZE);
-        sfs_util_read_from_medium(sfs->fd, block, ENCRYPTION_BLOCK_SIZE);
+        uint8_t* encrypted_block = allocate(ENCRYPTION_BLOCK_SIZE);
+        sfs_util_read_from_medium(sfs->fd, encrypted_block,
+                ENCRYPTION_BLOCK_SIZE);
         curpos += ENCRYPTION_BLOCK_SIZE;
 
-        sfs_decrypt(block, key, ENCRYPTION_BLOCK_SIZE);
+        uint8_t* decrypted_block = sfs_decrypt(encrypted_block, key,
+                ENCRYPTION_BLOCK_SIZE);
+        free(encrypted_block);
 
         /*
          * get the correct bytes from the block, even if fewer bytes were
@@ -106,11 +109,11 @@ HIDDEN int sfs_io_read_cluster(const struct sfs_filesystem* sfs,
             bytes_in_block = bytes_left;
         }
 
-        uint8_t* tmp = block + offset;
+        uint8_t* tmp = decrypted_block + offset;
         for (size_t i = 0; i < bytes_in_block; i++) {
             *ptr++ = *tmp++;
         }
-        free(block);
+        free(decrypted_block);
 
         if (bytes_in_block >= bytes_left) {
             return (ptr - buffer);
@@ -121,30 +124,35 @@ HIDDEN int sfs_io_read_cluster(const struct sfs_filesystem* sfs,
         bytes_left -= (ENCRYPTION_BLOCK_SIZE - offset);
     }
 
-    /* align the end of what's left with the encryption blocks */
+    /* read as many full encryption blocks as possible with what's left */
     SFS_FILE_OFFSET extra_bytes = (bytes_left & (ENCRYPTION_BLOCK_SIZE - 1));
     bytes_left -= extra_bytes;
+    if (bytes_left) {
+        uint8_t* encrypted_block = allocate(bytes_left);
+        sfs_util_read_from_medium(sfs->fd, encrypted_block, bytes_left);
+        curpos += bytes_left;
+        uint8_t* decrypted_block = sfs_decrypt(encrypted_block, key,
+                bytes_left);
+        free(encrypted_block);
 
-    uint8_t* block = allocate(bytes_left);
-    sfs_util_read_from_medium(sfs->fd, block, bytes_left);
-    curpos += bytes_left;
-    sfs_decrypt(block, key, bytes_left);
-
-    memcpy(ptr, block, bytes_left);
-    free(block);
-    ptr += bytes_left;
+        memcpy(ptr, decrypted_block, bytes_left);
+        free(decrypted_block);
+        ptr += bytes_left;
+    }
 
     if (extra_bytes) {
         bytes_left = extra_bytes;
-        block = allocate(ENCRYPTION_BLOCK_SIZE);
-        sfs_util_read_from_medium(sfs->fd, block, ENCRYPTION_BLOCK_SIZE);
-        sfs_decrypt(block, key, ENCRYPTION_BLOCK_SIZE);
+        uint8_t* encrypted_block = allocate(ENCRYPTION_BLOCK_SIZE);
+        sfs_util_read_from_medium(sfs->fd, encrypted_block,
+                ENCRYPTION_BLOCK_SIZE);
+        uint8_t* decrypted_block = sfs_decrypt(encrypted_block, key,
+                ENCRYPTION_BLOCK_SIZE);
 
-        uint8_t* tmp = block;
+        uint8_t* tmp = decrypted_block;
         for (size_t i = 0; i < bytes_left; i++) {
             *ptr++ = *tmp++;
         }
-        free(block);
+        free(decrypted_block);
     }
 
     return (ptr - buffer);
@@ -163,11 +171,14 @@ HIDDEN int sfs_io_write_cluster(const struct sfs_filesystem* sfs,
         sfs_util_seek_in_medium(sfs->fd, -offset, SEEK_CUR);
         curpos -= offset;
 
-        uint8_t* block = allocate(ENCRYPTION_BLOCK_SIZE);
-        sfs_util_read_from_medium(sfs->fd, block, ENCRYPTION_BLOCK_SIZE);
+        uint8_t* encrypted_block = allocate(ENCRYPTION_BLOCK_SIZE);
+        sfs_util_read_from_medium(sfs->fd, encrypted_block,
+                ENCRYPTION_BLOCK_SIZE);
         curpos += ENCRYPTION_BLOCK_SIZE;
 
-        sfs_decrypt(block, key, ENCRYPTION_BLOCK_SIZE);
+        uint8_t* decrypted_block = sfs_decrypt(encrypted_block, key,
+                ENCRYPTION_BLOCK_SIZE);
+        free(encrypted_block);
 
         /*
          * get the correct bytes from the block, even if fewer bytes were
@@ -178,17 +189,20 @@ HIDDEN int sfs_io_write_cluster(const struct sfs_filesystem* sfs,
             bytes_in_block = bytes_left;
         }
 
-        uint8_t* tmp = block + offset;
+        uint8_t* tmp = decrypted_block + offset;
         for (size_t i = 0; i < bytes_in_block; i++) {
             *tmp++ = *ptr++;
         }
 
         sfs_util_seek_in_medium(sfs->fd, -ENCRYPTION_BLOCK_SIZE, SEEK_CUR);
 
-        sfs_encrypt(block, key, ENCRYPTION_BLOCK_SIZE);
-        sfs_util_write_to_medium(sfs->fd, block, ENCRYPTION_BLOCK_SIZE);
+        encrypted_block = sfs_encrypt(decrypted_block, key,
+                ENCRYPTION_BLOCK_SIZE);
+        free(decrypted_block);
 
-        free(block);
+        sfs_util_write_to_medium(sfs->fd, encrypted_block,
+                ENCRYPTION_BLOCK_SIZE);
+        free(encrypted_block);
 
         if (bytes_in_block >= bytes_left) {
             return (ptr - data);
@@ -198,37 +212,43 @@ HIDDEN int sfs_io_write_cluster(const struct sfs_filesystem* sfs,
         bytes_left -= (ENCRYPTION_BLOCK_SIZE - offset);
     }
 
-    /* align the end of what's left with the encryption blocks */
+    /* write as many full encryption blocks as possible with what's left */
     SFS_FILE_OFFSET extra_bytes = (bytes_left & (ENCRYPTION_BLOCK_SIZE - 1));
     bytes_left -= extra_bytes;
+    if (bytes_left) {
+        uint8_t* encrypted_block = sfs_encrypt(ptr, key, bytes_left);
 
-    uint8_t* block = allocate(bytes_left);
-    memcpy(block, ptr, bytes_left);
-    sfs_encrypt(block, key, bytes_left);
-    sfs_util_write_to_medium(sfs->fd, block, bytes_left);
-    curpos += bytes_left;
+        sfs_util_write_to_medium(sfs->fd, encrypted_block, bytes_left);
+        free(encrypted_block);
+        curpos += bytes_left;
 
-    free(block);
+        ptr += bytes_left;
+    }
 
-    ptr += bytes_left;
-
+    /* write any extra bytes into beginning of next encryption block */
     if (extra_bytes) {
         bytes_left = extra_bytes;
-        block = allocate(ENCRYPTION_BLOCK_SIZE);
-        SFS_FILE_LENGTH bytes_read = sfs_util_read_from_medium(sfs->fd, block,
-                ENCRYPTION_BLOCK_SIZE);
-        sfs_decrypt(block, key, bytes_read);
+        uint8_t* encrypted_block = allocate(ENCRYPTION_BLOCK_SIZE);
+        SFS_FILE_LENGTH bytes_read = sfs_util_read_from_medium(sfs->fd,
+                encrypted_block, ENCRYPTION_BLOCK_SIZE);
+        uint8_t* decrypted_block = sfs_decrypt(encrypted_block, key,
+                bytes_read);
+        free(encrypted_block);
         sfs_util_seek_in_medium(sfs->fd, -bytes_read, SEEK_CUR);
 
-        uint8_t* tmp = block;
+        uint8_t* tmp = decrypted_block;
         for (size_t i = 0; i < bytes_left; i++) {
             /*ptr[i] = block[i];*/
             *tmp++ = *ptr++;
         }
 
-        sfs_encrypt(block, key, ENCRYPTION_BLOCK_SIZE);
-        sfs_util_write_to_medium(sfs->fd, block, ENCRYPTION_BLOCK_SIZE);
-        free(block);
+        encrypted_block = sfs_encrypt(decrypted_block, key,
+                ENCRYPTION_BLOCK_SIZE);
+        free(decrypted_block);
+
+        sfs_util_write_to_medium(sfs->fd, encrypted_block,
+                ENCRYPTION_BLOCK_SIZE);
+        free(encrypted_block);
     }
 
     return (ptr - data);
@@ -236,14 +256,16 @@ HIDDEN int sfs_io_write_cluster(const struct sfs_filesystem* sfs,
 
 HIDDEN int sfs_io_write_new_cluster(const struct sfs_filesystem* sfs) {
     const uint64_t sizeof_sector = sfs->bytes_per_sector;
-    uint8_t* sector = allocate(sizeof_sector);
-    sfs_encrypt(sector, sfs->global_key, sizeof_sector);
+    uint8_t* empty_sector = allocate(sizeof_sector);
+    uint8_t* encrypted_sector = sfs_encrypt(empty_sector, sfs->global_key,
+            sizeof_sector);
+    free(empty_sector);
 
     size_t num_sectors = sfs->sectors_per_cluster;
     for (size_t i = 0; i < num_sectors; i++) {
-        sfs_util_write_to_medium(sfs->fd, sector, sizeof_sector);
+        sfs_util_write_to_medium(sfs->fd, encrypted_sector, sizeof_sector);
     }
-    free(sector);
+    free(encrypted_sector);
 
     return (0);
 }

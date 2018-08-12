@@ -66,3 +66,8 @@ int run_tests() {
     /* test_aes(0, NULL); */
     return (0);
 }
+
+int main(int argc, char** argv) {
+    run_tests();
+    return (0);
+}

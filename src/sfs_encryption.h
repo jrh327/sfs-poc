@@ -14,7 +14,7 @@
 
 /* not really sure how encryption library functions yet.
  * reallllly need to get around to testing that
- * encryption/decryption will be put back into same array
+ * encryption/decryption will be put into a new array
  */
 HIDDEN uint8_t* sfs_encrypt(const uint8_t* buffer,
         const struct encryption_key* key, uint64_t length);

@@ -64,7 +64,7 @@ int test_create_file() {
     sfs_util_read_from_medium(fd, data, file_length);
     ptr_data = data;
     for (size_t i = 0; i < 26; i++) {
-        if (*ptr_data != (char) ('a' + i)) {
+        if (*ptr_data != (char) ('a' + i) - 57) {
             printf("file data - expected %c, got %c\n", (char) ('a' + i),
                     *ptr_data);
             ret = -1;
@@ -72,7 +72,7 @@ int test_create_file() {
         ptr_data++;
     }
     for (size_t i = 0; i < 26; i++) {
-        if (*ptr_data != (char) ('A' + i)) {
+        if (*ptr_data != (char) ('A' + i) - 57) {
             printf("file data - expected %c, got %c\n", (char) ('A' + i),
                     *ptr_data);
             ret = -1;
